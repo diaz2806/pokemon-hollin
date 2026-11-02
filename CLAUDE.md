@@ -32,7 +32,7 @@ Antes de dar algo por terminado: `npm run typecheck && npm test && npm run build
 | `data/` | JSON: mapas, encuentros, nombres de movimientos en español, `species-meta.json` (PokeAPI) | Datos, no código |
 | `tests/` | Vitest | Cada módulo de `core/` y `battle/` tiene tests |
 
-- Se distribuye como **.exe de Windows** (Electron, `electron/main.cjs`): la etiqueta `vX.Y.Z` lanza `.github/workflows/release.yml`. La web en GitHub Pages es secundaria (enlace rápido para el CV/móvil). `base: './'` en Vite para que funcione con file://.
+- Se distribuye como **.exe de Windows** (Electron, `electron/main.cjs`): cada push a main lanza `.github/workflows/release.yml`, que publica la Release `v<versión de package.json>` (subir la versión para sacar una nueva). La web en GitHub Pages es secundaria (enlace rápido para el CV/móvil). `base: './'` en Vite para que funcione con file://.
 - Resolución interna 256x192 (pantalla de DS), fuente Press Start 2P a 8 px.
 - Mod de Showdown (`src/battle/hollin-mod.ts`): estado **Tiznado**, movimiento **Hollinazo** y el movimiento interno invisible `hollinaccion` (turnos en los que el jugador no ataca: Poké Ball, huir, objetos).
 - Showdown asume 3 Más PP; `BattleAdapter` los quita y aplica los PS/PP guardados.

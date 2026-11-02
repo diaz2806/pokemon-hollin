@@ -59,7 +59,7 @@ npm test
 npm run dist:win   # genera los .exe en release/ (en Windows)
 ```
 
-Al subir una etiqueta `vX.Y.Z`, GitHub Actions compila los `.exe` en una máquina Windows y los publica en Releases.
+En cada push a `main`, GitHub Actions compila los `.exe` en una máquina Windows y los publica en Releases con la versión de `package.json`.
 
 ## Aviso
 
