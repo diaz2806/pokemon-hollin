@@ -4,7 +4,9 @@
 
 Fangame de Pokémon hecho en TypeScript que se juega en el navegador.
 
-**▶ Jugar:** https://diaz2806.github.io/pokemon-hollin/
+**⬇ Descargar para Windows:** [Releases](https://github.com/diaz2806/pokemon-hollin/releases) (instalador o versión portable `.exe`)
+
+**▶ Jugar en el navegador / móvil:** https://diaz2806.github.io/pokemon-hollin/
 
 ## Estado
 
@@ -42,7 +44,8 @@ automáticamente (ver [ASSETS.md](ASSETS.md)).
 | Combate | [`@pkmn/sim`](https://www.npmjs.com/package/@pkmn/sim) (motor de Pokémon Showdown) con un mod propio |
 | Build | Vite |
 | Tests | Vitest |
-| Despliegue | GitHub Actions → GitHub Pages |
+| Escritorio | Electron + electron-builder (instalador NSIS y `.exe` portable) |
+| Despliegue | GitHub Actions → Releases (Windows) y GitHub Pages (web) |
 
 La lógica del juego (`src/core`) no depende de Phaser, así que se testea sin abrir el juego. El único punto de contacto con Showdown es `src/battle/BattleAdapter.ts`.
 
@@ -50,9 +53,13 @@ La lógica del juego (`src/core`) no depende de Phaser, así que se testea sin a
 
 ```bash
 npm install
-npm run dev
+npm run dev        # versión web con recarga
+npm run desktop    # versión de escritorio (Electron)
 npm test
+npm run dist:win   # genera los .exe en release/ (en Windows)
 ```
+
+Al subir una etiqueta `vX.Y.Z`, GitHub Actions compila los `.exe` en una máquina Windows y los publica en Releases.
 
 ## Aviso
 

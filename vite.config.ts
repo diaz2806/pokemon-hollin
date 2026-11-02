@@ -1,8 +1,8 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  // GitHub Pages sirve el juego en https://diaz2806.github.io/pokemon-hollin/
-  base: '/pokemon-hollin/',
+  // Rutas relativas: sirve igual para GitHub Pages y para el .exe (Electron carga file://).
+  base: './',
   build: {
     chunkSizeWarningLimit: 4000,
   },

@@ -1,6 +1,6 @@
 {
   "name": "pokemon-hollin",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "description": "Pokémon Hollín — fangame ambientado en la Inglaterra industrial de 1923",
   "scripts": {
     "dev": "vite",
@@ -8,7 +8,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "desktop": "vite build && electron .",
+    "dist:win": "vite build && electron-builder --win"
   },
   "repository": {
     "type": "git",
@@ -28,10 +30,55 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
+    "electron": "^45.2.1",
+    "electron-builder": "^26.18.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.5",
     "vitest": "^5.1.0"
   },
   "private": true,
-  "type": "module"
+  "type": "module",
+  "main": "electron/main.cjs",
+  "productName": "Pokemon Hollin",
+  "build": {
+    "appId": "io.github.diaz2806.pokemonhollin",
+    "productName": "Pokemon Hollin",
+    "copyright": "Fangame sin ánimo de lucro",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "build/icon.png",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "artifactName": "${productName}-${version}-${arch}-${target}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Pokémon Hollín",
+      "createDesktopShortcut": true
+    },
+    "portable": {
+      "artifactName": "PokemonHollin-${version}-portable.exe"
+    }
+  }
 }

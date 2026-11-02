@@ -6,3 +6,4 @@ coverage/
 # Assets oficiales (sprites, música de Pokémon): nunca en el repo público.
 # Guárdalos en local dentro de assets/ y no se subirán.
 assets/
+release/
