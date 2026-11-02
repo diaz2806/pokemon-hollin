@@ -1,0 +1,19 @@
+import * as Phaser from 'phaser';
+import { BootScene } from './scenes/BootScene';
+import { OverworldScene } from './scenes/OverworldScene';
+import { BattleScene } from './scenes/BattleScene';
+import { PALETTE } from './ui/palette';
+
+new Phaser.Game({
+  type: Phaser.AUTO,
+  parent: 'game',
+  width: 640,
+  height: 480,
+  backgroundColor: PALETTE.night,
+  pixelArt: true,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
+  scene: [BootScene, OverworldScene, BattleScene],
+});
