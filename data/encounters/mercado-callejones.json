@@ -1,10 +1,30 @@
 {
   "id": "mercado-callejones",
-  "rate": 0.15,
+  "rate": 0.12,
   "slots": [
-    { "species": "Pidove", "weight": 40, "minLevel": 3, "maxLevel": 5, "moves": ["Tackle", "Growl"] },
-    { "species": "Rattata", "weight": 30, "minLevel": 3, "maxLevel": 5, "moves": ["Tackle", "Tail Whip"] },
-    { "species": "Trubbish", "weight": 20, "minLevel": 4, "maxLevel": 6, "moves": ["Pound", "Poison Gas"] },
-    { "species": "Lillipup", "weight": 10, "minLevel": 4, "maxLevel": 6, "moves": ["Tackle", "Leer"] }
+    {
+      "species": "Pidove",
+      "weight": 40,
+      "minLevel": 3,
+      "maxLevel": 5
+    },
+    {
+      "species": "Rattata",
+      "weight": 30,
+      "minLevel": 3,
+      "maxLevel": 5
+    },
+    {
+      "species": "Trubbish",
+      "weight": 20,
+      "minLevel": 4,
+      "maxLevel": 6
+    },
+    {
+      "species": "Lillipup",
+      "weight": 10,
+      "minLevel": 4,
+      "maxLevel": 6
+    }
   ]
 }

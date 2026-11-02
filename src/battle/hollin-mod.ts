@@ -2,7 +2,7 @@
  * Mod "hollin" para el motor de Pokémon Showdown (@pkmn/sim).
  *
  * Hereda todas las reglas y datos oficiales (Gen 9) y añade lo propio de
- * Pokémon Hollín: el estado Tiznado y el movimiento Humareda. Aquí irán
+ * Pokémon Hollín: el estado Tiznado y el movimiento Hollinazo. Aquí irán
  * también el clima Smog, las formas regionales de Ashbury y las especies nuevas.
  */
 import { Dex } from '@pkmn/sim';
@@ -44,9 +44,9 @@ const tiznado = {
   },
 };
 
-const humareda = {
+const hollinazo = {
   num: -1,
-  name: 'Humareda',
+  name: 'Hollinazo',
   type: 'Fire',
   category: 'Status',
   accuracy: 90,
@@ -60,6 +60,30 @@ const humareda = {
   desc: 'Envuelve al rival en humo negro: queda Tiznado y puede fallar sus ataques.',
 };
 
+/**
+ * Movimiento interno e invisible. Se usa en los turnos en los que el jugador no
+ * ataca (lanzar una Poké Ball, intentar huir, usar un objeto) para que el rival
+ * sí actúe. Prioridad máxima y onTry -> null: no hace nada ni escribe en el log.
+ */
+export const ACTION_MOVE_ID = 'hollinaccion';
+const hollinaccion = {
+  num: -2,
+  name: 'Hollinaccion',
+  type: '???',
+  category: 'Status',
+  accuracy: true,
+  basePower: 0,
+  pp: 64,
+  noPPBoosts: true,
+  priority: 6,
+  target: 'self',
+  flags: {},
+  onTry() {
+    return null;
+  },
+  secondary: null,
+};
+
 let cached: ModdedDex | undefined;
 
 /** Registra el mod (una sola vez) y devuelve su Dex. */
@@ -67,7 +91,7 @@ export function getHollinDex(): ModdedDex {
   if (!cached) {
     cached = Dex.mod('hollin', {
       Conditions: { tiznado },
-      Moves: { humareda },
+      Moves: { hollinazo, hollinaccion },
       Formats: [{ name: '[Gen 9] Hollin', mod: 'hollin', ruleset: [] }],
     } as unknown as Parameters<typeof Dex.mod>[1]);
   }

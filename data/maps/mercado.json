@@ -1,25 +1,118 @@
 {
-  "id": "mercado",
-  "name": "El Mercado",
-  "encounterTable": "mercado-callejones",
-  "rows": [
-    "############################",
-    "#..........#######.........#",
-    "#..P.......#######..,,,,,..#",
-    "#..........#######..,,,,,..#",
-    "#....##.............,,,,,..#",
-    "#....##....................#",
-    "#..........~~~~~~~~~.......#",
-    "#..........~~~~~~~~~.......#",
-    "#..,,,,....................#",
-    "#..,,,,.......####.........#",
-    "#..,,,,.......####....,,,,.#",
-    "#.............####....,,,,.#",
-    "#.....................,,,,.#",
-    "#..####....................#",
-    "#..####........,,,,........#",
-    "#..............,,,,........#",
-    "#..........................#",
-    "############################"
-  ]
+ "id": "mercado",
+ "name": "El Mercado",
+ "encounterTable": "mercado-callejones",
+ "rows": [
+  "RRRKRRRRKRRRRRRKRRRRRRRRKRRRRKRR",
+  "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR",
+  "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE",
+  "##W#W##W#W##W#V##W#W###V#V##V#V#",
+  "###W##B#W####D####D#######DD####",
+  "#......S.......................#",
+  "#..L.......L........L.......L...",
+  "#...P...........................",
+  "#.......................XQ......",
+  "#..AAA.AAA.AAA..........X......#",
+  "#..TTT.TTT.TTT.................#",
+  "#..............................#",
+  "______L_________________________",
+  "~~~~~~~~~~~~~~~==~~~~~~~~~~~~~~~",
+  "~~~~~~~~~~~~~~~==~~~~~~~~~~~~~~~",
+  "__________________________L_____",
+  "#..............................#",
+  "#RRKRRRR,,,,RRRRKRRR,,,,RRRRKRR#",
+  "#EEEEEEE,,,,EEEEEEEE,,,,EEEEEEE#",
+  "##W##W##,,,,##W##W##,,,,##W##W##",
+  "########,,,,###D####,,,,########",
+  "#.......,,,,........,,,,.......#",
+  "#,,,,,,,,,,,,,,,,,,,,,,,,,,Q,,,#",
+  "#,,,,XX,,,,,,,,,,,,,,,,,,,,,,,,#",
+  "#,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,#",
+  "################################"
+ ],
+ "lockedDoorText": [
+  "Está cerrado.",
+  "Al otro lado se oyen ronquidos y una radio."
+ ],
+ "warps": [
+  {
+   "x": 6,
+   "y": 4,
+   "to": "pub",
+   "toX": 5,
+   "toY": 7,
+   "facing": "up"
+  }
+ ],
+ "signs": [
+  {
+   "x": 7,
+   "y": 5,
+   "text": [
+    "EL GALLO NEGRO",
+    "Cerveza, comida y cama.",
+    "Los Pokémon cansados descansan gratis."
+   ]
+  }
+ ],
+ "npcs": [
+  {
+   "id": "guardia",
+   "x": 30,
+   "y": 7,
+   "sprite": "copper",
+   "facing": "left",
+   "dialog": [
+    "¡Alto ahí, chaval!",
+    "Nadie sale del Mercado sin licencia de Hargreave Industries.",
+    "Y menos con un Pokémon. Esos bichos son propiedad de la fábrica."
+   ]
+  },
+  {
+   "id": "pilluelo",
+   "x": 9,
+   "y": 7,
+   "sprite": "urchin",
+   "facing": "down",
+   "dialog": [
+    "¿Has bajado a los callejones del sur?",
+    "Con tanto humo salen Pokémon de las alcantarillas.",
+    "Si tienes uno, puedes pelear con ellos... o atraparlos."
+   ]
+  },
+  {
+   "id": "vendedora",
+   "x": 6,
+   "y": 10,
+   "sprite": "lady",
+   "facing": "down",
+   "action": "giveBalls",
+   "dialog": [
+    "¡Poké Balls de hojalata! Recién salidas de la fábrica.",
+    "...Bueno, no preguntes cómo han llegado aquí."
+   ]
+  },
+  {
+   "id": "estibador",
+   "x": 20,
+   "y": 11,
+   "sprite": "worker",
+   "facing": "down",
+   "dialog": [
+    "Antes este canal era azul. Eso dicen.",
+    "Yo no lo he visto nunca. Solo humo y aceite."
+   ]
+  },
+  {
+   "id": "obrero",
+   "x": 14,
+   "y": 16,
+   "sprite": "worker",
+   "facing": "left",
+   "dialog": [
+    "Hargreave dice que sus fábricas dan trabajo a toda Ashbury.",
+    "Lo que no dice es cuántos Pokémon se queman en los hornos."
+   ]
+  }
+ ]
 }

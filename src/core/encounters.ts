@@ -6,7 +6,8 @@ export interface EncounterSlot {
   weight: number;
   minLevel: number;
   maxLevel: number;
-  moves: string[];
+  /** Opcional: si no se indica, se usan los movimientos que aprende por nivel. */
+  moves?: string[];
 }
 
 export interface EncounterTable {
@@ -19,7 +20,7 @@ export interface EncounterTable {
 export interface WildEncounter {
   species: string;
   level: number;
-  moves: string[];
+  moves?: string[];
 }
 
 export type Rng = () => number;

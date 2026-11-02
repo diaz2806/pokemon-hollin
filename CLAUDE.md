@@ -21,16 +21,21 @@ Antes de dar algo por terminado: `npm run typecheck && npm test && npm run build
 
 | Carpeta | Qué contiene | Regla |
 | --- | --- | --- |
-| `src/core/` | Lógica pura del juego: cuadrícula, mapas, seguidor, encuentros, estado | **Nunca importa Phaser ni @pkmn/sim.** Todo testeable |
-| `src/battle/` | Adaptador con el motor de Showdown (`@pkmn/sim`) y el mod `hollin` | Única carpeta que importa `@pkmn/sim` |
-| `src/scenes/` | Escenas de Phaser: solo dibujan y recogen input | Sin reglas de juego aquí |
-| `src/ui/` | Paleta y utilidades visuales | |
-| `data/` | JSON: mapas, tablas de encuentros, (más adelante) diálogos y especies | Datos, no código |
-| `tests/` | Tests de Vitest | Cada módulo de `core/` y `battle/` tiene tests |
+| `src/core/` | Lógica pura: cuadrícula, mapas y NPCs, seguidor, encuentros, equipo, experiencia, captura, guardado | **Nunca importa Phaser ni @pkmn/sim.** Todo testeable |
+| `src/battle/` | Frontera con Showdown: `BattleAdapter`, mod `hollin`, `dex-service` (datos oficiales), `progression` (EXP, niveles, evolución), `log-es` (protocolo → pasos en español) | Única carpeta que importa `@pkmn/sim` |
+| `src/game/` | Sesión (partida en curso + localStorage) y registro de contenido (mapas, iniciales) | |
+| `src/scenes/` | Boot, Title, World, Battle, Party: dibujan, animan y recogen input | Sin reglas de juego aquí |
+| `src/ui/` | Controles (teclado + táctil), caja de texto y menús, paleta, assets opcionales | |
+| `src/ui/art/` | Pixel art original generado por código: tiles, personajes, placeholders, fondos | Arte propio, sí va al repo |
+| `data/` | JSON: mapas, encuentros, nombres de movimientos en español, `species-meta.json` (PokeAPI) | Datos, no código |
+| `tests/` | Vitest | Cada módulo de `core/` y `battle/` tiene tests |
 
-- El mod de Showdown vive en `src/battle/hollin-mod.ts`: estado **Tiznado**, movimiento **Humareda**. Ahí irán el clima Smog, las formas de Ashbury y las especies nuevas.
-- Showdown asume 3 Más PP; `BattleAdapter.resetPPUps` los quita.
-- Los combates son 1 contra 1 de momento (sin cambios de Pokémon ni captura).
+- Resolución interna 256x192 (pantalla de DS), fuente Press Start 2P a 8 px.
+- Mod de Showdown (`src/battle/hollin-mod.ts`): estado **Tiznado**, movimiento **Hollinazo** y el movimiento interno invisible `hollinaccion` (turnos en los que el jugador no ataca: Poké Ball, huir, objetos).
+- Showdown asume 3 Más PP; `BattleAdapter` los quita y aplica los PS/PP guardados.
+- Formato de mapas temporal: filas de texto en `data/maps/*.json` (leyenda en `src/core/tilemap.ts`). Cuando el mundo crezca, migrar a Tiled.
+- `?debug` en la URL expone `__game` y `__session` en la consola.
+- Limitaciones conocidas: sin combates de entrenador todavía; si un Pokémon sube de nivel en mitad de un combate contra varios, sus stats se actualizan al acabar.
 
 ## Convenciones
 
@@ -41,7 +46,7 @@ Antes de dar algo por terminado: `npm run typecheck && npm test && npm run build
 
 ## Assets oficiales
 
-Sprites y música oficiales de Pokémon **nunca** se suben al repositorio (riesgo de DMCA). Van en `assets/`, que está en `.gitignore`. Mientras no existan, el juego usa placeholders generados en `BootScene`.
+Sprites y música oficiales de Pokémon **nunca** se suben al repositorio (riesgo de DMCA). Van en `assets/`, que está en `.gitignore` (formato en `ASSETS.md`). Mientras no existan, el juego usa placeholders por tipo.
 
 ## Alberto
 

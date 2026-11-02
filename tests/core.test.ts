@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { directionBetween, step } from '../src/core/grid';
 import { Follower } from '../src/core/follower';
-import { TileMap } from '../src/core/tilemap';
+import { TileMap, canWalk, interactionAt, visibleNpcs, type MapData } from '../src/core/tilemap';
 import { rollEncounter, type EncounterTable } from '../src/core/encounters';
-import mercado from '../data/maps/mercado.json';
+import { addCaught, anyAble, firstAbleIndex, moveToFront, type PartyMember } from '../src/core/party';
+import { loadGame, newGame, saveGame, type KeyValueStorage } from '../src/core/game-state';
+import mercadoJson from '../data/maps/mercado.json';
+import pubJson from '../data/maps/pub.json';
+import fabricaJson from '../data/maps/fabrica.json';
 import mercadoTable from '../data/encounters/mercado-callejones.json';
+
+const mercado = mercadoJson as MapData;
+const pub = pubJson as MapData;
+const fabrica = fabricaJson as MapData;
 
 describe('grid', () => {
   it('avanza una casilla en cada dirección', () => {
@@ -27,44 +35,66 @@ describe('Follower', () => {
   });
 
   it('sigue el mismo camino que el jugador en una esquina', () => {
-    const player = { x: 1, y: 0 };
     const f = new Follower({ x: 0, y: 0 });
-    const path = [{ x: 2, y: 0 }, { x: 2, y: 1 }, { x: 2, y: 2 }];
-    let from = player;
-    for (const next of path) {
+    let from = { x: 1, y: 0 };
+    for (const next of [{ x: 2, y: 0 }, { x: 2, y: 1 }, { x: 2, y: 2 }]) {
       f.onLeaderMoved(from);
       from = next;
     }
-    // El seguidor pasa por (2,0) y gira hacia abajo, igual que el jugador.
     expect(f.position).toEqual({ x: 2, y: 1 });
     expect(f.facing).toBe('down');
   });
 });
 
-describe('TileMap', () => {
-  const map = new TileMap(mercado);
-
-  it('carga el mapa del Mercado con su posición inicial', () => {
-    expect(map.width).toBe(28);
-    expect(map.height).toBe(18);
-    expect(map.isWalkable(map.start)).toBe(true);
+describe('Mapas', () => {
+  it('todos los mapas cargan y sus warps llevan a casillas transitables', () => {
+    const maps = { mercado, pub, fabrica };
+    for (const data of Object.values(maps)) {
+      const map = new TileMap(data);
+      for (const w of data.warps ?? []) {
+        const dest = new TileMap(maps[w.to as keyof typeof maps]);
+        expect(dest.isWalkableTile({ x: w.toX, y: w.toY }), `${data.id} -> ${w.to}`).toBe(true);
+        expect(map.warpAt({ x: w.x, y: w.y })).toBe(w);
+      }
+    }
   });
 
-  it('no deja pisar muros, agua ni salir del mapa', () => {
-    expect(map.isWalkable({ x: 0, y: 0 })).toBe(false);
-    expect(map.tileAt({ x: 12, y: 6 })).toBe('water');
-    expect(map.isWalkable({ x: 12, y: 6 })).toBe(false);
-    expect(map.isWalkable({ x: -1, y: 5 })).toBe(false);
+  it('el Mercado tiene posición inicial, muros y canal', () => {
+    const map = new TileMap(mercado);
+    expect(map.start).toEqual({ x: 4, y: 7 });
+    expect(map.isWalkableTile({ x: 0, y: 0 })).toBe(false);
+    expect(map.tileAt({ x: 5, y: 13 })).toBe('water');
+    expect(map.tileAt({ x: 15, y: 13 })).toBe('bridge');
+    expect(map.isWalkableTile({ x: 15, y: 13 })).toBe(true);
   });
 
-  it('marca los callejones con humo', () => {
-    expect(map.tileAt({ x: 3, y: 8 })).toBe('smoke');
-    expect(map.isWalkable({ x: 3, y: 8 })).toBe(true);
+  it('los NPCs bloquean el paso', () => {
+    const map = new TileMap(mercado);
+    const npcs = visibleNpcs(mercado, {});
+    expect(canWalk(map, npcs, { x: 9, y: 7 })).toBe(false);
+    expect(canWalk(map, npcs, { x: 8, y: 7 })).toBe(true);
+  });
+
+  it('se habla con el tabernero a través del mostrador', () => {
+    const map = new TileMap(pub);
+    const it = interactionAt(map, visibleNpcs(pub, {}), { x: 5, y: 4 }, 'up');
+    expect(it.kind === 'npc' && it.npc.id).toBe('tabernero');
+  });
+
+  it('carteles y puertas cerradas', () => {
+    const map = new TileMap(mercado);
+    expect(interactionAt(map, [], { x: 7, y: 6 }, 'up').kind).toBe('sign');
+    expect(interactionAt(map, [], { x: 13, y: 5 }, 'up').kind).toBe('lockedDoor');
+  });
+
+  it('las jaulas liberadas desaparecen según los flags', () => {
+    expect(visibleNpcs(fabrica, {}).length).toBe(3);
+    expect(visibleNpcs(fabrica, { freed_growlithe: true }).map((n) => n.id)).not.toContain('jaula-growlithe');
   });
 
   it('rechaza mapas mal formados', () => {
     expect(() => new TileMap({ id: 'x', name: 'x', rows: ['##', '#'] })).toThrow();
-    expect(() => new TileMap({ id: 'x', name: 'x', rows: ['..'] })).toThrow(/P/);
+    expect(() => new TileMap({ id: 'x', name: 'x', rows: ['?'] })).toThrow();
   });
 });
 
@@ -76,13 +106,58 @@ describe('rollEncounter', () => {
   });
 
   it('elige especie según los pesos y un nivel dentro del rango', () => {
-    const values = [0, 0, 0.99]; // hay encuentro, primer slot, nivel máximo
+    const values = [0, 0, 0.99];
     const enc = rollEncounter(table, () => values.shift()!);
-    expect(enc).toEqual({ species: 'Pidove', level: 5, moves: ['Tackle', 'Growl'] });
+    expect(enc?.species).toBe('Pidove');
+    expect(enc?.level).toBe(table.slots[0].maxLevel);
   });
 
   it('el último slot también puede salir', () => {
     const values = [0, 0.999, 0];
-    expect(rollEncounter(table, () => values.shift()!)?.species).toBe('Lillipup');
+    expect(rollEncounter(table, () => values.shift()!)?.species).toBe(table.slots[table.slots.length - 1].species);
+  });
+});
+
+const mon = (uid: string, hp: number): PartyMember => ({ uid, species: 'Pidove', level: 5, exp: 0, hp, status: '', moves: [] });
+
+describe('Equipo', () => {
+  it('añade al equipo hasta 6 y el resto a la caja', () => {
+    const party: PartyMember[] = [];
+    const box: PartyMember[] = [];
+    for (let i = 0; i < 7; i++) addCaught(party, box, mon(String(i), 10));
+    expect(party.length).toBe(6);
+    expect(box.map((m) => m.uid)).toEqual(['6']);
+  });
+
+  it('detecta quién puede luchar y reordena', () => {
+    const party = [mon('a', 0), mon('b', 5)];
+    expect(firstAbleIndex(party)).toBe(1);
+    expect(anyAble(party)).toBe(true);
+    moveToFront(party, 1);
+    expect(party[0].uid).toBe('b');
+    expect(anyAble([mon('c', 0)])).toBe(false);
+  });
+});
+
+describe('Guardado', () => {
+  const memory = (): KeyValueStorage => {
+    const m = new Map<string, string>();
+    return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => void m.set(k, v), removeItem: (k) => void m.delete(k) };
+  };
+
+  it('guarda y carga la partida', () => {
+    const storage = memory();
+    const state = newGame('Alberto');
+    state.party.push(mon('x', 12));
+    saveGame(state, storage);
+    expect(loadGame(storage)).toEqual(state);
+  });
+
+  it('ignora guardados corruptos o de otra versión', () => {
+    const storage = memory();
+    storage.setItem('pokemon-hollin/save', '{roto');
+    expect(loadGame(storage)).toBeNull();
+    storage.setItem('pokemon-hollin/save', JSON.stringify({ ...newGame(), version: 999 }));
+    expect(loadGame(storage)).toBeNull();
   });
 });

@@ -1,0 +1,70 @@
+{
+ "id": "pub",
+ "name": "El Gallo Negro",
+ "indoor": true,
+ "rows": [
+  "bbbHHHHHHbbb",
+  "bbbbbbbbbbbb",
+  "wwwwwwwwwwww",
+  "wwcccccccwww",
+  "wwwwwwwwwwww",
+  "wtwwwwwwwtww",
+  "wwwwwwwwwwww",
+  "wtwwwwwwwtww",
+  "wwwwwmmwwwww"
+ ],
+ "warps": [
+  {
+   "x": 5,
+   "y": 8,
+   "to": "mercado",
+   "toX": 6,
+   "toY": 5,
+   "facing": "down"
+  },
+  {
+   "x": 6,
+   "y": 8,
+   "to": "mercado",
+   "toX": 6,
+   "toY": 5,
+   "facing": "down"
+  }
+ ],
+ "npcs": [
+  {
+   "id": "tabernero",
+   "x": 5,
+   "y": 2,
+   "sprite": "bartender",
+   "facing": "down",
+   "action": "heal",
+   "dialog": [
+    "Bienvenido a El Gallo Negro.",
+    "¿Tus Pokémon tienen mala cara? Déjamelos un rato."
+   ]
+  },
+  {
+   "id": "parroquiano",
+   "x": 2,
+   "y": 5,
+   "sprite": "worker",
+   "facing": "left",
+   "dialog": [
+    "Dicen que Hargreave tiene algo enorme encerrado en el horno central.",
+    "Algo que no se apaga nunca."
+   ]
+  },
+  {
+   "id": "senora",
+   "x": 8,
+   "y": 6,
+   "sprite": "lady",
+   "facing": "down",
+   "dialog": [
+    "Mi hermano trabaja en la fundición.",
+    "Dice que los Pokémon de los hornos ya ni duermen."
+   ]
+  }
+ ]
+}

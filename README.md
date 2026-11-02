@@ -8,15 +8,30 @@ Fangame de Pokémon hecho en TypeScript que se juega en el navegador.
 
 ## Estado
 
-Fase 1 (núcleo de combate) en marcha. Ya funciona:
+Ya se puede jugar el arranque de la historia:
 
-- Mapa del Mercado con movimiento en cuadrícula (teclado o táctil).
-- Pokémon que te sigue, al estilo de HeartGold/SoulSilver.
-- Encuentros con Pokémon salvajes en los callejones con humo.
-- Combates con las reglas oficiales gracias al motor de Pokémon Showdown.
-- Estado propio **Tiznado**: el humo puede hacer fallar los ataques y oculta la vida del rival.
+- **Intro:** título, introducción y elección de nombre.
+- **Fábrica en llamas:** eliges qué Pokémon liberas de las jaulas (Growlithe, Sprigatito u Oshawott).
+- **El Mercado:** ciudad con farolas, humo, canal, NPCs con diálogos y una vendedora que te da Poké Balls.
+- **El Gallo Negro:** el pub donde el tabernero cura a tus Pokémon.
+- **Pokémon que te sigue**, al estilo de HeartGold/SoulSilver.
+- **Combates estilo DS** con las reglas oficiales (motor de Pokémon Showdown): luchar, mochila, cambiar, huir.
+- **Captura** con Poké Balls, equipo de 6, experiencia, subidas de nivel, movimientos nuevos y evolución.
+- **Estado propio Tiznado** (movimiento Hollinazo): el humo hace fallar ataques y oculta la vida del rival.
+- **Guardado** en el navegador y **controles táctiles** en el móvil.
 
-Todo el arte es provisional (placeholders).
+El arte de la ciudad y los personajes es pixel art original generado por código. Los Pokémon
+usan placeholders por tipo; si tienes sprites oficiales en local, el juego los usa
+automáticamente (ver [ASSETS.md](ASSETS.md)).
+
+## Controles
+
+| Acción | Teclado | Móvil |
+| --- | --- | --- |
+| Moverse | Flechas / WASD | Cruceta |
+| Aceptar / hablar | Z, Espacio, Enter | A |
+| Cancelar | X, Retroceso | B |
+| Menú | Escape, M | MENÚ |
 
 ## Stack
 

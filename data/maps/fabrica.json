@@ -1,0 +1,92 @@
+{
+ "id": "fabrica",
+ "name": "Fábrica Hargreave",
+ "indoor": true,
+ "rows": [
+  "pppppppppp",
+  "pOppOppOpp",
+  "gggggggggg",
+  "ggCggCggCg",
+  "gggggggggg",
+  "gggggggggg",
+  "gggggggggg",
+  "ppppmmpppp"
+ ],
+ "onEnter": {
+  "flag": "introFire",
+  "text": [
+   "¡FUEGO! ¡Fuego en la sala de hornos!",
+   "Los capataces han huido y han dejado a los Pokémon encerrados.",
+   "No puedes sacarlos a todos... pero sí a uno."
+  ]
+ },
+ "warps": [
+  {
+   "x": 4,
+   "y": 7,
+   "to": "mercado",
+   "toX": 4,
+   "toY": 7,
+   "facing": "down",
+   "requires": "starterChosen",
+   "blockedText": [
+    "No puedo irme y dejarlos aquí.",
+    "Tengo que abrir al menos una jaula."
+   ]
+  },
+  {
+   "x": 5,
+   "y": 7,
+   "to": "mercado",
+   "toX": 4,
+   "toY": 7,
+   "facing": "down",
+   "requires": "starterChosen",
+   "blockedText": [
+    "No puedo irme y dejarlos aquí.",
+    "Tengo que abrir al menos una jaula."
+   ]
+  }
+ ],
+ "npcs": [
+  {
+   "id": "jaula-growlithe",
+   "x": 2,
+   "y": 3,
+   "sprite": "cage",
+   "species": "Growlithe",
+   "facing": "down",
+   "action": "cage",
+   "unlessFlag": "freed_growlithe",
+   "dialog": [
+    "Un Growlithe encerrado. Tose por el humo, pero no deja de ladrar."
+   ]
+  },
+  {
+   "id": "jaula-sprigatito",
+   "x": 5,
+   "y": 3,
+   "sprite": "cage",
+   "species": "Sprigatito",
+   "facing": "down",
+   "action": "cage",
+   "unlessFlag": "freed_sprigatito",
+   "dialog": [
+    "Un Sprigatito hecho una bola. Las hojas de su lomo están negras de hollín."
+   ]
+  },
+  {
+   "id": "jaula-oshawott",
+   "x": 8,
+   "y": 3,
+   "sprite": "cage",
+   "species": "Oshawott",
+   "facing": "down",
+   "action": "cage",
+   "unlessFlag": "freed_oshawott",
+   "dialog": [
+    "Un Oshawott empapado. Lo usaban para enfriar las calderas."
+   ]
+  }
+ ]
+}
