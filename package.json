@@ -10,7 +10,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "desktop": "vite build && electron .",
-    "dist:win": "vite build && electron-builder --win"
+    "dist:win": "vite build && electron-builder --win --publish never"
   },
   "repository": {
     "type": "git",
@@ -68,17 +68,17 @@
           ]
         }
       ],
-      "icon": "build/icon.png",
-      "artifactName": "${productName}-${version}-${arch}-${target}.${ext}"
+      "icon": "build/icon.png"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "shortcutName": "Pokémon Hollín",
-      "createDesktopShortcut": true
+      "createDesktopShortcut": true,
+      "artifactName": "PokemonHollin-${version}-instalador.${ext}"
     },
     "portable": {
-      "artifactName": "PokemonHollin-${version}-portable.exe"
+      "artifactName": "PokemonHollin-${version}-portable.${ext}"
     }
   }
 }

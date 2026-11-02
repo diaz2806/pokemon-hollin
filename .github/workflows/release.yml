@@ -45,7 +45,7 @@ jobs:
           body: |
             **Pokémon Hollín** — versión de escritorio para Windows.
 
-            - `Pokemon Hollin-…-nsis.exe`: instalador (crea acceso directo).
+            - `PokemonHollin-…-instalador.exe`: instalador (crea acceso directo).
             - `PokemonHollin-…-portable.exe`: sin instalar, doble clic y a jugar.
 
             Windows puede avisar de que la app no está firmada: «Más información» → «Ejecutar de todas formas».
