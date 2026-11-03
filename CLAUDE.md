@@ -34,6 +34,8 @@ Antes de dar algo por terminado: `npm run typecheck && npm test && npm run build
 
 - Se distribuye como **.exe de Windows** (Electron, `electron/main.cjs`): cada push a main lanza `.github/workflows/release.yml`, que publica la Release `v<versión de package.json>` (subir la versión para sacar una nueva). La web en GitHub Pages es secundaria (enlace rápido para el CV/móvil). `base: './'` en Vite para que funcione con file://.
 - Resolución interna 256x192 (pantalla de DS), fuente Press Start 2P a 8 px.
+- Formas regionales de Ashbury en `src/battle/regional/` (especie + learnset + entrada de Pokédex), registradas en el mod. Primera: cadena de **Sandile** (Veneno/Siniestro, mismo total de stats). En pantalla se llaman como la especie base (`speciesLabel`).
+- Todas las especies y movimientos de las 9 generaciones funcionan (Showdown). Nombres oficiales en español de movimientos y habilidades generados con `scripts/build-names-es.mjs` (PokeAPI).
 - Mod de Showdown (`src/battle/hollin-mod.ts`): estado **Tiznado**, movimiento **Hollinazo** y el movimiento interno invisible `hollinaccion` (turnos en los que el jugador no ataca: Poké Ball, huir, objetos).
 - Showdown asume 3 Más PP; `BattleAdapter` los quita y aplica los PS/PP guardados.
 - Formato de mapas temporal: filas de texto en `data/maps/*.json` (leyenda en `src/core/tilemap.ts`). Cuando el mundo crezca, migrar a Tiled.

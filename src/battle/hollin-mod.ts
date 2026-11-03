@@ -7,6 +7,7 @@
  */
 import { Dex } from '@pkmn/sim';
 import type { ActiveMove, Battle, ModdedDex, Pokemon } from '@pkmn/sim';
+import { SANDILE_ASHBURY_LEARNSETS, SANDILE_ASHBURY_SPECIES } from './regional/sandile-ashbury';
 
 export const HOLLIN_FORMAT_ID = 'gen9hollin';
 
@@ -92,6 +93,10 @@ export function getHollinDex(): ModdedDex {
     cached = Dex.mod('hollin', {
       Conditions: { tiznado },
       Moves: { hollinazo, hollinaccion },
+      // Formas regionales de Ashbury.
+      Pokedex: { ...SANDILE_ASHBURY_SPECIES },
+      Learnsets: { ...SANDILE_ASHBURY_LEARNSETS },
+      FormatsData: Object.fromEntries(Object.keys(SANDILE_ASHBURY_SPECIES).map((id) => [id, { tier: 'Illegal' }])),
       Formats: [{ name: '[Gen 9] Hollin', mod: 'hollin', ruleset: [] }],
     } as unknown as Parameters<typeof Dex.mod>[1]);
   }

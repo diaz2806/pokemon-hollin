@@ -8,7 +8,7 @@ import type { BattleStep, Side } from '../battle/log-es';
 import { createMember, defaultMoves, maxHp, meta, moveInfo, speciesTypes } from '../battle/dex-service';
 import { evolve, gainExp, pendingEvolution, replaceMove } from '../battle/progression';
 import { expGain, levelProgress } from '../core/experience';
-import { addCaught, displayName, type PartyMember } from '../core/party';
+import { addCaught, displayName, speciesLabel, type PartyMember } from '../core/party';
 import { markCaught } from '../core/game-state';
 import { session } from '../game/session';
 import { Menu, TextBox, drawFrame, textStyle } from '../ui/TextBox';
@@ -101,7 +101,7 @@ export class BattleScene extends Phaser.Scene {
     this.refreshBox(this.foeBox, false);
     this.foeBox.container.setVisible(true);
     const foe = this.adapter.opponent;
-    await this.say(this.setup.kind === 'wild' ? `¡Un ${foe.species} salvaje sale de entre el humo!` : `¡${this.setup.trainerName} saca a ${foe.species}!`);
+    await this.say(this.setup.kind === 'wild' ? `¡Un ${foe.name} salvaje sale de entre el humo!` : `¡${this.setup.trainerName} saca a ${foe.name}!`);
     await this.say(`¡Adelante, ${this.adapter.player.name}!`, 700);
     await this.tween({ targets: this.playerSprite, x: PLAYER_POS.x, duration: 400, ease: 'Quad.Out' });
     this.refreshBox(this.playerBox, true);
@@ -261,7 +261,7 @@ export class BattleScene extends Phaser.Scene {
         const star = this.add.image(ball.x, ball.y, 'star').setDepth(501);
         this.tweens.add({ targets: star, x: ball.x + (i - 1) * 14, y: ball.y - 16, alpha: 0, duration: 600 });
       }
-      await this.say(`¡Ya está! ¡Has atrapado a ${this.adapter.opponent.species}!`);
+      await this.say(`¡Ya está! ¡Has atrapado a ${this.adapter.opponent.name}!`);
       ball.destroy();
       return true;
     }
@@ -327,7 +327,7 @@ export class BattleScene extends Phaser.Scene {
       const f = this.adapter.opponent;
       this.foeSprite.setTexture(this.battlerTexture(f.species, false)).setAlpha(1).setScale(1).setPosition(-60, FOE_POS.y);
       this.refreshBox(this.foeBox, false);
-      await this.say(`¡${this.setup.trainerName ?? 'El rival'} saca a ${f.species}!`, 600);
+      await this.say(`¡${this.setup.trainerName ?? 'El rival'} saca a ${f.name}!`, 600);
       await this.tween({ targets: this.foeSprite, x: FOE_POS.x, duration: 350 });
     }
   }
@@ -348,8 +348,8 @@ export class BattleScene extends Phaser.Scene {
       caught.status = foe.status;
       markCaught(session.state, foe.species);
       const where = addCaught(party, session.state.box, caught);
-      if (where === 'box') await this.say(`${foe.species} se ha enviado a la caja del PC.`);
-      else caughtNew = foe.species;
+      if (where === 'box') await this.say(`${foe.name} se ha enviado a la caja del PC.`);
+      else caughtNew = foe.name;
     } else if (this.adapter.hasFled) {
       outcome = 'fled';
     } else if (this.adapter.winner === 'player') {
@@ -459,7 +459,7 @@ export class BattleScene extends Phaser.Scene {
       sprite.setTexture(this.battlerTexture(into, false));
       this.cameras.main.flash(400, 255, 255, 255);
       out[i] = evolve(out[i], into);
-      await this.say(`¡Enhorabuena! ¡${name} ha evolucionado en ${into}!`);
+      await this.say(`¡Enhorabuena! ¡${name} ha evolucionado en ${speciesLabel(into)}!`);
       markCaught(session.state, into);
       sprite.destroy();
       bg.destroy();
@@ -478,7 +478,7 @@ export class BattleScene extends Phaser.Scene {
   private databox(player: boolean): Databox {
     const x = player ? 128 : 6;
     const y = player ? 92 : 10;
-    const w = player ? 124 : 116;
+    const w = 124;
     const h = player ? 44 : 32;
     const g = this.add.graphics();
     g.fillStyle(UI.frameDarkN).fillRect(x, y, w, h);
@@ -487,12 +487,12 @@ export class BattleScene extends Phaser.Scene {
     const name = this.add.text(x + 6, y + 5, '', textStyle());
     const level = this.add.text(x + w - 38, y + 5, '', textStyle());
     g.fillStyle(0x2a2622).fillRect(x + w - 74, y + 17, 68, 7);
-    this.add.text(x + w - 94, y + 16, 'PS', textStyle('#b4532a')).setScale(1);
+    const psLabel = this.add.text(x + w - 89, y + 16, 'PS', textStyle('#b4532a'));
     const barBg = this.add.rectangle(x + w - 72, y + 18, 64, 5, 0x5a5550).setOrigin(0);
     const bar = this.add.rectangle(x + w - 72, y + 18, 64, 5, PALETTE.hpGood).setOrigin(0);
     const status = this.add.text(x + 6, y + 16, '', textStyle('#b4532a'));
     const smoke = this.add.text(x + 6, y + (player ? 26 : 16), '', textStyle('#5c5850'));
-    const parts: Phaser.GameObjects.GameObject[] = [g, name, level, barBg, bar, status, smoke];
+    const parts: Phaser.GameObjects.GameObject[] = [g, name, level, psLabel, barBg, bar, status, smoke];
     let hpText: Phaser.GameObjects.Text | undefined;
     let exp: Phaser.GameObjects.Rectangle | undefined;
     if (player) {

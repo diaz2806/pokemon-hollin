@@ -21,8 +21,13 @@ export interface PartyMember {
 
 export const PARTY_SIZE = 6;
 
+/** Nombre de especie para mostrar: las formas regionales se llaman como la base ("Sandile"). */
+export function speciesLabel(species: string): string {
+  return species.replace(/-(Ashbury|Alola|Galar|Hisui|Paldea)$/, '');
+}
+
 export function displayName(m: PartyMember): string {
-  return m.nickname ?? m.species;
+  return m.nickname ?? speciesLabel(m.species);
 }
 
 export function isAble(m: PartyMember): boolean {

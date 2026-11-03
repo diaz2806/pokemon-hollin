@@ -9,7 +9,7 @@ import { Battle, toID } from '@pkmn/sim';
 import { ACTION_MOVE_ID, getHollinDex, HOLLIN_FORMAT_ID } from './hollin-mod';
 import { StepTranslator, visibleLines, type BattleStep, type FoeLabel } from './log-es';
 import { moveName, toId } from './dex-service';
-import type { PartyMember } from '../core/party';
+import { speciesLabel, type PartyMember } from '../core/party';
 import { tryCapture, statusBonus, type CaptureResult, type Rng } from '../core/capture';
 
 /** Definición mínima de un Pokémon rival. */
@@ -74,7 +74,7 @@ const MAX_IVS = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 };
 
 function specToSet(spec: PokemonSpec) {
   return {
-    name: spec.nickname ?? spec.species,
+    name: spec.nickname ?? speciesLabel(spec.species),
     species: spec.species,
     level: spec.level,
     moves: [...spec.moves, ACTION_MOVE_ID],
