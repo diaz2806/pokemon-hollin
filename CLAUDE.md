@@ -42,6 +42,7 @@ Antes de dar algo por terminado: `npm run typecheck && npm test && npm run build
 - `?debug` en la URL expone `__game` y `__session` en la consola.
 - Entrenadores: `trainer` dentro de cada NPC del mapa (`src/core/trainers.ts`): equipo, `sight` (casillas de visión), diálogos, dinero y `reward` (flags como `ficha_mercado`, objetos). Derrotado = flag `beat_<mapa>_<npc>`. `BattleAdapter` saca solo el siguiente Pokémon del rival (`settleOpponent`).
 - Fichas de banda en `src/game/content.ts` (`FICHAS`). Hecha: Mercado (Los Gorriones, Mag la Urraca). Siguiente: Muelles (la Ruta 1 termina en un piquete de huelga).
+- Press Start 2P trae ligaduras fi/fl: `main.ts` parchea `Text.setText` para romperlas con un ZWNJ.
 - Limitaciones conocidas: si un Pokémon sube de nivel en mitad de un combate contra varios, sus stats se actualizan al acabar.
 
 ## Convenciones
@@ -53,7 +54,7 @@ Antes de dar algo por terminado: `npm run typecheck && npm test && npm run build
 
 ## Assets oficiales
 
-Sprites y música oficiales de Pokémon **nunca** se suben al repositorio público (riesgo de DMCA). Van en `assets/` (en `.gitignore`), convertidos desde el Generation 9 Pack con `scripts/convert-essentials-pack.py` (formato en `ASSETS.md`), y se cargan bajo demanda (`src/ui/assets.ts`: `queueAssets` en preload, `ensureAssets` en caliente). El .exe con sprites se compila desde el repositorio privado `diaz2806/pokemon-hollin-assets`. Sin assets, placeholders por tipo.
+Sprites y música oficiales de Pokémon **nunca** se suben al repositorio público (riesgo de DMCA). Van en `assets/` (en `.gitignore`): Pokémon desde el Generation 9 Pack (`scripts/convert-essentials-pack.py`, cargados con `src/ui/assets.ts`) y el resto (interfaz de combate y ventanas de Essentials, personajes Gen 4, fondos, entrenadores, objetos, audio) con `scripts/convert-essentials-base.py`, cargados con `src/ui/resources.ts` (`queueRes`/`ensureRes`, claves `res:<cat>/<nombre>`). Formato en `ASSETS.md`. Interfaz de combate estilo Essentials en `src/ui/battle-ui.ts`; sonido en `src/ui/audio.ts` (`playBgm`, `playMe`, `playSe`, `playCry`). Cada pantalla comprueba si sus recursos están y, si no, usa su versión propia. El .exe con sprites se compila desde el repositorio privado `diaz2806/pokemon-hollin-assets`. Sin assets, placeholders por tipo.
 
 ## Alberto
 

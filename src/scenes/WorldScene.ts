@@ -21,6 +21,8 @@ import { TextBox, Menu } from '../ui/TextBox';
 import { T, TILE_FRAMES } from '../ui/art/tiles';
 import { characterKey, followerPlaceholderKey, tileKey, FACINGS } from '../ui/art/textures';
 import { textStyle } from '../ui/TextBox';
+import { resKey, resReady } from '../ui/resources';
+import { playBgm, playMe, playSe } from '../ui/audio';
 import { assetKey, ensureAssets, hasAsset, hasTexture } from '../ui/assets';
 import { PALETTE, GAME_W, GAME_H } from '../ui/palette';
 import type { BattleSceneData, BattleResult } from './BattleScene';
@@ -30,6 +32,9 @@ const WALK_MS = 230;
 const TURN_MS = 90;
 
 const ROW: Record<Direction, number> = { down: 0, left: 1, right: 2, up: 3 };
+
+/** Protagonista (HGSS) si están los personajes de Gen 4. */
+export const HERO_OW = 'trchar000';
 
 interface Animated {
   image: Phaser.GameObjects.Image;
@@ -71,7 +76,7 @@ export class WorldScene extends Phaser.Scene {
     this.mapLayer = this.add.container(0, 0);
     this.fxLayer = this.add.container(0, 0).setDepth(600);
     this.textbox = new TextBox(this);
-    this.player = this.add.sprite(0, 0, characterKey('hero'), 0).setOrigin(0.5, 1);
+    this.player = this.add.sprite(0, 0, this.charTexture(HERO_OW, 'hero'), 0).setOrigin(0.5, 1);
     this.loadMap(this.state.map, this.state.pos, this.state.facing);
     this.cameras.main.fadeIn(400);
     this.events.on(Phaser.Scenes.Events.WAKE, (_s: unknown, data?: BattleResult) => this.onWake(data));
@@ -113,6 +118,24 @@ export class WorldScene extends Phaser.Scene {
       return;
     }
     this.tryMove(dir);
+  }
+
+  // ---------- Personajes ----------
+
+  /** Textura del personaje: el de Essentials/Gen 4 si está, o el pixel art propio. */
+  private charTexture(ow: string | undefined, palette: string): string {
+    if (ow && resReady(this, 'characters', ow)) return resKey('characters', ow);
+    return characterKey(palette);
+  }
+
+  /**
+   * Fotograma mirando a `dir`. step: 0 = quieto, 1 y 2 = pasos.
+   * Las hojas de RPG Maker tienen 4 columnas (quieto, paso, quieto, paso);
+   * el arte propio, 3 (quieto, paso A, paso B).
+   */
+  private dirFrame(sprite: Phaser.GameObjects.Sprite, dir: Direction, step: 0 | 1 | 2 = 0): void {
+    const rpgMaker = sprite.texture.key.startsWith('res:');
+    sprite.setFrame(rpgMaker ? ROW[dir] * 4 + [0, 1, 3][step] : ROW[dir] * 3 + step);
   }
 
   // ---------- Mapa ----------
@@ -170,7 +193,8 @@ export class WorldScene extends Phaser.Scene {
         sprite = this.creatureSprite(npc.species, 'down');
         sprite.setPosition(npc.x * T + 8, npc.y * T + 14).setDepth(npc.y * 10 + 6);
       } else {
-        sprite = this.add.sprite(npc.x * T + 8, npc.y * T + T, characterKey(npc.sprite), ROW[npc.facing] * 3);
+        sprite = this.add.sprite(npc.x * T + 8, npc.y * T + T, this.charTexture(npc.ow, npc.sprite), 0);
+        this.dirFrame(sprite, npc.facing);
         sprite.setOrigin(0.5, 1).setDepth(npc.y * 10 + 5);
       }
       this.npcSprites.set(npc.id, sprite);
@@ -180,7 +204,7 @@ export class WorldScene extends Phaser.Scene {
   private placePlayer(): void {
     const { pos, facing } = this.state;
     this.player.setPosition(pos.x * T + 8, pos.y * T + T).setDepth(pos.y * 10 + 5);
-    this.player.setFrame(ROW[facing] * 3);
+    this.dirFrame(this.player, facing);
   }
 
   /** Coloca al Pokémon que te sigue detrás del jugador (o lo quita si no hay equipo). */
@@ -293,7 +317,7 @@ export class WorldScene extends Phaser.Scene {
 
   private face(dir: Direction): void {
     this.state.facing = dir;
-    this.player.setFrame(ROW[dir] * 3);
+    this.dirFrame(this.player, dir);
   }
 
   private tryMove(dir: Direction): void {
@@ -305,14 +329,15 @@ export class WorldScene extends Phaser.Scene {
     }
     const followerHere = this.followerSprite && target.x === this.follower.position.x && target.y === this.follower.position.y;
     if (!canWalk(this.map, this.npcs, target) && !followerHere) {
-      this.player.setFrame(ROW[dir] * 3);
+      this.dirFrame(this.player, dir);
+      playSe(this, 'player_bump', 0.4);
       return;
     }
     const from = this.state.pos;
     this.state.pos = target;
     this.moving = true;
     this.stepToggle = !this.stepToggle;
-    this.player.setFrame(ROW[dir] * 3 + (this.stepToggle ? 1 : 2));
+    this.dirFrame(this.player, dir, this.stepToggle ? 1 : 2);
     this.player.setDepth(Math.max(from.y, target.y) * 10 + 5);
     this.tweens.add({
       targets: this.player,
@@ -320,7 +345,7 @@ export class WorldScene extends Phaser.Scene {
       y: target.y * T + T,
       duration: WALK_MS,
       onUpdate: (tw) => {
-        if (tw.progress > 0.5) this.player.setFrame(ROW[dir] * 3);
+        if (tw.progress > 0.5) this.dirFrame(this.player, dir);
       },
       onComplete: () => {
         this.player.setDepth(target.y * 10 + 5);
@@ -352,6 +377,7 @@ export class WorldScene extends Phaser.Scene {
     const warp = this.map.warpAt(this.state.pos);
     if (warp) {
       await this.lock(async () => {
+        playSe(this, 'door_enter');
         await this.fade(true);
         this.loadMap(warp.to, { x: warp.toX, y: warp.toY }, warp.facing);
         await this.fade(false);
@@ -390,7 +416,7 @@ export class WorldScene extends Phaser.Scene {
 
   private async talkTo(npc: NpcData): Promise<void> {
     const sprite = this.npcSprites.get(npc.id);
-    if (sprite && npc.sprite !== 'cage' && npc.sprite !== 'creature') sprite.setFrame(ROW[opposite(this.state.facing)] * 3);
+    if (sprite && npc.sprite !== 'cage' && npc.sprite !== 'creature') this.dirFrame(sprite, opposite(this.state.facing));
     if (npc.trainer) {
       if (isDefeated(this.state.flags, this.map.data.id, npc)) return this.textbox.say(npc.trainer.after);
       if (!anyAble(this.state.party)) return this.textbox.say('Ahora mismo no tienes Pokémon en condiciones de luchar.');
@@ -425,7 +451,7 @@ export class WorldScene extends Phaser.Scene {
     }
     await this.textbox.say('Muy bien. Déjamelos un momento...', { keepOpen: true });
     this.cameras.main.flash(500, 232, 196, 106);
-    await this.wait(900);
+    await Promise.all([this.wait(900), playMe(this, 'pkmn_healing')]);
     this.state.party = this.state.party.map(healMember);
     this.state.lastPub = { map: this.map.data.id, pos: { ...this.state.pos } };
     this.setupFollower(false);
@@ -455,6 +481,7 @@ export class WorldScene extends Phaser.Scene {
       this.tweens.add({ targets: sprite, y: sprite.y + 14, alpha: 0, duration: 300 });
     }
     this.npcs = this.npcs.filter((n) => n.id !== npc.id);
+    void playMe(this, 'pkmn_get');
     await this.textbox.say([`¡Has abierto la jaula! ${species} sale de un salto.`, `${species} se pega a tus piernas. No piensa separarse de ti.`]);
     sprite?.destroy();
     this.npcSprites.delete(npc.id);
@@ -471,6 +498,7 @@ export class WorldScene extends Phaser.Scene {
     await this.textbox.say(['Toma, para empezar.', 'Y si te pilla un guardia, tú no me conoces.'], { keepOpen: true });
     this.state.bag.pokeball += 5;
     this.state.flags.gotBalls = true;
+    void playMe(this, 'item_get');
     await this.textbox.say('¡Has recibido 5 Poké Balls!');
   }
 
@@ -483,16 +511,18 @@ export class WorldScene extends Phaser.Scene {
     if (!sprite) return;
     const mark = this.add.text(sprite.x, sprite.y - 26, '!', { ...textStyle('#e8c46a'), fontSize: '16px' }).setOrigin(0.5).setDepth(900);
     mark.setShadow(1, 1, '#000000', 0, false, true);
+    playSe(this, 'exclaim');
     await this.wait(700);
     mark.destroy();
     for (const p of path) {
-      sprite.setFrame(ROW[npc.facing] * 3 + (p.x + p.y) % 2 + 1);
+      this.dirFrame(sprite, npc.facing, (((p.x + p.y) % 2) + 1) as 1 | 2);
       await new Promise<void>((r) =>
         this.tweens.add({ targets: sprite, x: p.x * T + 8, y: p.y * T + T, duration: WALK_MS, onComplete: () => r() }),
       );
       npc.x = p.x;
       npc.y = p.y;
-      sprite.setDepth(p.y * 10 + 5).setFrame(ROW[npc.facing] * 3);
+      sprite.setDepth(p.y * 10 + 5);
+      this.dirFrame(sprite, npc.facing);
     }
     this.face(opposite(npc.facing));
     await this.trainerBattle(npc);
@@ -501,14 +531,14 @@ export class WorldScene extends Phaser.Scene {
   private async trainerBattle(npc: NpcData): Promise<void> {
     const t = npc.trainer!;
     const sprite = this.npcSprites.get(npc.id);
-    sprite?.setFrame(ROW[opposite(this.state.facing)] * 3);
+    if (sprite) this.dirFrame(sprite, opposite(this.state.facing));
     await this.textbox.say(t.intro);
     for (const p of t.party) markSeen(this.state, p.species);
     this.pendingTrainer = npc;
     await this.transitionToBattle({
       kind: 'trainer',
       foes: t.party,
-      trainer: { name: t.name, className: t.className, sprite: npc.sprite, money: t.money, defeat: t.defeat },
+      trainer: { name: t.name, className: t.className, sprite: npc.sprite, battler: t.battler, money: t.money, defeat: t.defeat },
     });
   }
 
@@ -517,11 +547,16 @@ export class WorldScene extends Phaser.Scene {
     this.state.flags[defeatFlag(this.map.data.id, npc.id)] = true;
     if (!t.reward) return;
     const sprite = this.npcSprites.get(npc.id);
-    sprite?.setFrame(ROW[opposite(this.state.facing)] * 3);
+    if (sprite) this.dirFrame(sprite, opposite(this.state.facing));
     for (const flag of t.reward.flags) this.state.flags[flag] = true;
     if (t.reward.items?.pokeball) this.state.bag.pokeball += t.reward.items.pokeball;
     if (t.reward.items?.potion) this.state.bag.potion += t.reward.items.potion;
-    if (t.reward.flags.some((f) => f.startsWith('ficha_'))) this.cameras.main.flash(400, 232, 196, 106);
+    if (t.reward.flags.some((f) => f.startsWith('ficha_'))) {
+      this.cameras.main.flash(400, 232, 196, 106);
+      void playMe(this, 'badge_get');
+    } else if (t.reward.items) {
+      void playMe(this, 'item_get');
+    }
     await this.textbox.say([...t.reward.text, ...t.after]);
     // Los NPC que dependen de la ficha (el guardia) cambian.
     this.refreshNpcs();
@@ -588,6 +623,7 @@ export class WorldScene extends Phaser.Scene {
     sprite?.destroy();
     this.npcSprites.delete(npc.id);
     this.setupFollower(false);
+    void playMe(this, 'pkmn_get');
     await this.textbox.say([
       '...y se pone a tu lado como si siempre hubiera sido así.',
       where === 'party' ? '¡Sandile se ha unido a tu equipo!' : 'Tu equipo está lleno: Sandile se ha ido a la caja del PC.',
@@ -633,6 +669,7 @@ export class WorldScene extends Phaser.Scene {
       const yes = await this.textbox.ask('¿Quieres guardar la partida?', ['SÍ', 'NO']);
       if (yes === 0) {
         session.save();
+        void playMe(this, 'gui_save_game');
         await this.textbox.say(`${this.state.playerName} ha guardado la partida.`);
       } else this.textbox.hide();
     }
@@ -702,6 +739,8 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private onWake(result?: BattleResult): void {
+    // De momento las calles no tienen música (Essentials las trae en MIDI): silencio con ambiente.
+    void playBgm(this, null);
     void (async () => {
       this.busy = true;
       this.setupFollower(false);

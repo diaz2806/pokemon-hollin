@@ -4,6 +4,7 @@ import { controls } from '../ui/input';
 import { Menu, TextBox, textStyle } from '../ui/TextBox';
 import { GAME_W, GAME_H, UI } from '../ui/palette';
 import { officialAssetCount } from '../ui/assets';
+import { playBgm, stopBgm } from '../ui/audio';
 
 const INTRO = [
   'Ashbury, Inglaterra. 1923.',
@@ -22,6 +23,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
+    void playBgm(this, 'title');
     this.add.image(0, 0, 'bg-alley').setOrigin(0).setScale(1, 1.34);
     this.add.rectangle(0, 0, GAME_W, GAME_H, 0x0e0e14, 0.35).setOrigin(0);
     const smoke = this.add.particles(0, 70, 'puff', {
@@ -66,6 +68,7 @@ export class TitleScene extends Phaser.Scene {
     if (choice < 0) return this.mainMenu();
     if (options[choice] === 'CONTINUAR' && session.load()) {
       this.cameras.main.fadeOut(400);
+      void stopBgm(this);
       this.time.delayedCall(420, () => this.scene.start('World'));
       return;
     }
@@ -94,6 +97,7 @@ export class TitleScene extends Phaser.Scene {
     await box.say(`${session.state.playerName}. Bien. Ahora, despierta...`);
     this.cameras.main.fadeOut(500, 120, 30, 10);
     await new Promise((r) => this.time.delayedCall(520, r));
+    void stopBgm(this);
     this.scene.start('World', { intro: true });
   }
 }

@@ -117,7 +117,8 @@
     "Nadie sale del Mercado sin licencia de Hargreave Industries.",
     "...A no ser que vengas de parte de Los Gorriones. Ellos saben a quién pagar."
    ],
-   "unlessFlag": "ficha_mercado"
+   "unlessFlag": "ficha_mercado",
+   "ow": "trchar104"
   },
   {
    "id": "pilluelo",
@@ -129,7 +130,8 @@
     "¿Ves el almacén de la esquina, el de la puerta con el pájaro pintado?",
     "Es la guarida de Los Gorriones, la banda del Mercado.",
     "Si les ganas, hasta los guardias te dejarán pasar. Están todos comprados."
-   ]
+   ],
+   "ow": "trchar024"
   },
   {
    "id": "vendedora",
@@ -141,7 +143,8 @@
    "dialog": [
     "¡Poké Balls de hojalata! Recién salidas de la fábrica.",
     "...Bueno, no preguntes cómo han llegado aquí."
-   ]
+   ],
+   "ow": "npc_11"
   },
   {
    "id": "estibador",
@@ -152,7 +155,8 @@
    "dialog": [
     "Antes este canal era azul. Eso dicen.",
     "Yo no lo he visto nunca. Solo humo y aceite."
-   ]
+   ],
+   "ow": "trchar136"
   },
   {
    "id": "obrero",
@@ -163,7 +167,8 @@
    "dialog": [
     "Hargreave dice que sus fábricas dan trabajo a toda Ashbury.",
     "Lo que no dice es cuántos Pokémon se queman en los hornos."
-   ]
+   ],
+   "ow": "trchar129"
   },
   {
    "id": "sandile",
@@ -189,7 +194,8 @@
    "dialog": [
     "...¿Esa ficha es de Mag la Urraca?",
     "Circula, chaval. Yo no te he visto."
-   ]
+   ],
+   "ow": "trchar104"
   },
   {
    "id": "gorrion-puerta",
@@ -221,8 +227,10 @@
     ],
     "after": [
      "La jefa está al fondo. No le toques los bolsillos."
-    ]
-   }
+    ],
+    "battler": "burglar"
+   },
+   "ow": "trchar157"
   }
  ]
 }

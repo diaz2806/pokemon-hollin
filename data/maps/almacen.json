@@ -60,8 +60,10 @@
     ],
     "after": [
      "Mag nos enseñó todo lo que sabemos. Bueno, casi todo."
-    ]
-   }
+    ],
+    "battler": "burglar"
+   },
+   "ow": "trchar170"
   },
   {
    "id": "gorrion-sid",
@@ -93,8 +95,10 @@
     ],
     "after": [
      "Ve. A ver qué te dice Mag."
-    ]
-   }
+    ],
+    "battler": "burglar"
+   },
+   "ow": "trchar158"
   },
   {
    "id": "mag",
@@ -148,8 +152,10 @@
       "¡Has conseguido la FICHA DEL MERCADO!",
       "Mag también te da 2 Pociones."
      ]
-    }
-   }
+    },
+    "battler": "cooltrainer_f"
+   },
+   "ow": "npc_88"
   }
  ]
 }

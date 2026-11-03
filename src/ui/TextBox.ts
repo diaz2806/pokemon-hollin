@@ -7,6 +7,17 @@
 import * as Phaser from 'phaser';
 import { controls } from './input';
 import { FONT_PX, UI } from './palette';
+import { resKey, resReady } from './resources';
+import { playSe } from './audio';
+
+/** Marcos de Essentials (si están en assets/): HGSS gris con borde dorado. */
+export const SPEECH_SKIN = 'speech_hgss_1';
+export const CHOICE_SKIN = 'choice_1';
+/** Bordes (izquierda, derecha, arriba, abajo) medidos sobre cada imagen. */
+const SKIN_INSETS: Record<string, [number, number, number, number]> = {
+  [SPEECH_SKIN]: [10, 21, 6, 6],
+  [CHOICE_SKIN]: [6, 6, 6, 6],
+};
 
 export const LINE_CHARS = 28;
 const CHARS_PER_SECOND = 70;
@@ -33,7 +44,32 @@ export function wrap(text: string, width = LINE_CHARS): string[] {
 }
 
 export function textStyle(color: string = UI.ink): Phaser.Types.GameObjects.Text.TextStyle {
-  return { fontFamily: '"Press Start 2P"', fontSize: `${FONT_PX}px`, color, resolution: 1 };
+  const style: Phaser.Types.GameObjects.Text.TextStyle = { fontFamily: '"Press Start 2P"', fontSize: `${FONT_PX}px`, color, resolution: 1 };
+  // Tinta oscura con sombra clara, como el texto de los juegos de DS.
+  if (color === UI.ink) style.shadow = { offsetX: 1, offsetY: 1, color: '#c8c0b0', fill: true };
+  return style;
+}
+
+/**
+ * Marco de ventana: el windowskin de Essentials si está cargado (estirado en 9
+ * partes), o el marco de latón propio si no.
+ */
+export function makeFrame(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  kind: 'speech' | 'choice' = 'choice',
+): Phaser.GameObjects.GameObject {
+  const skin = kind === 'speech' ? SPEECH_SKIN : CHOICE_SKIN;
+  if (resReady(scene, 'ui/windowskins', skin)) {
+    const [l, r, t, b] = SKIN_INSETS[skin];
+    return scene.add.nineslice(x, y, resKey('ui/windowskins', skin), undefined, w, h, l, r, t, b).setOrigin(0);
+  }
+  const g = scene.add.graphics();
+  drawFrame(g, x, y, w, h);
+  return g;
 }
 
 /** Dibuja un marco de ventana estilo latón. */
@@ -58,12 +94,13 @@ export class TextBox {
     y = 142,
     w = 252,
     h = 48,
+    /** false = sin marco (en combate el texto va sobre el fondo de mensajes). */
+    framed = true,
   ) {
     this.x = x;
     this.y = y;
     this.w = w;
-    const g = scene.add.graphics();
-    drawFrame(g, x, y, w, h);
+    const g = framed ? makeFrame(scene, x, y, w, h, 'speech') : scene.add.rectangle(x, y, 1, 1, 0, 0).setOrigin(0);
     const l1 = scene.add.text(x + 12, y + 12, '', textStyle());
     const l2 = scene.add.text(x + 12, y + 28, '', textStyle());
     this.arrow = scene.add.text(x + w - 18, y + h - 14, 'v', textStyle(UI.accent)).setVisible(false);
@@ -214,8 +251,7 @@ export class Menu {
     const h = rows * 14 + 16;
     const x = place.x ?? (place.right !== undefined ? place.right - w : 0);
     const y = place.y ?? (place.bottom !== undefined ? place.bottom - h : 0);
-    const g = scene.add.graphics();
-    drawFrame(g, x, y, w, h);
+    const g = makeFrame(scene, x, y, w, h, 'choice');
     this.texts = options.map((o, i) => {
       const col = i % this.columns;
       const row = Math.floor(i / this.columns);
@@ -252,13 +288,16 @@ export class Menu {
             if (next >= 0 && next < this.options.length && (this.columns > 1 || dir === 'up' || dir === 'down')) {
               this.index = next;
               this.place();
+              playSe(this.scene, 'gui_sel_cursor');
             }
           }
           if (controls.pressed('A')) {
             timer.remove();
+            playSe(this.scene, 'gui_sel_decision');
             resolve(this.index);
           } else if (controls.pressed('B')) {
             timer.remove();
+            playSe(this.scene, 'gui_sel_cancel');
             resolve(cancelIndex);
           }
         },

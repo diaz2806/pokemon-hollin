@@ -42,7 +42,8 @@
    "dialog": [
     "Bienvenido a El Gallo Negro.",
     "¿Tus Pokémon tienen mala cara? Déjamelos un rato."
-   ]
+   ],
+   "ow": "trchar059"
   },
   {
    "id": "parroquiano",
@@ -53,7 +54,8 @@
    "dialog": [
     "Dicen que Hargreave tiene algo enorme encerrado en el horno central.",
     "Algo que no se apaga nunca."
-   ]
+   ],
+   "ow": "trchar132"
   },
   {
    "id": "senora",
@@ -64,7 +66,8 @@
    "dialog": [
     "Mi hermano trabaja en la fundición.",
     "Dice que los Pokémon de los hornos ya ni duermen."
-   ]
+   ],
+   "ow": "npc_19"
   }
  ]
 }

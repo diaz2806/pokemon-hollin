@@ -1,4 +1,4 @@
-# Sprites oficiales de Pokémon (solo en local o en un repositorio privado)
+# Gráficos y audio oficiales (solo en local o en un repositorio privado)
 
 El juego funciona sin sprites oficiales: los Pokémon se ven como placeholders por tipo.
 Con sprites, se ven los de verdad en combate, en el menú de equipo y siguiéndote por el mapa.
@@ -31,6 +31,30 @@ assets/pokemon/
 
 - Se cargan bajo demanda: solo los de las especies que aparecen.
 - Las formas sin sprite propio (Sandile de Ashbury) usan el de su especie base hasta que haya arte propio.
+
+## Gráficos de Essentials y personajes Gen 4
+
+Interfaz de combate, ventanas, fondos, entrenadores, objetos, música y gritos salen de
+**Pokémon Essentials v21.1** (`Graphics/` y `Audio/`), y los personajes del mapa del pack
+**Gen 4 OWs v1.5 (Vanilla Sunshine)**. Se convierten a resolución de DS con:
+
+```bash
+python3 scripts/convert-essentials-base.py <carpeta con Graphics, Audio y Gen 4 OWs> assets
+```
+
+```
+assets/
+  characters/   trchar000.png ...   hojas 4x4 de RPG Maker (abajo, izq., der., arriba)
+  ui/windowskins, ui/battle, ui/bag, ui/types.png ...
+  battlebacks/  city_night_bg.png ...
+  trainers/     burglar.png ...     sprite de combate de cada clase de entrenador
+  items/        pokeball.png ...
+  audio/        bgm/ me/ se/ cries/  (.ogg; las músicas MIDI de Essentials no sirven en navegador)
+```
+
+- `src/ui/resources.ts` indexa todo con `import.meta.glob` y carga bajo demanda.
+- Si falta algo, el juego usa lo propio: ventanas dibujadas, menús de texto, personajes generados y silencio.
+- Los NPC eligen personaje con `ow` en el JSON del mapa; los entrenadores, su sprite de combate con `battler`.
 
 ## El .exe con sprites
 

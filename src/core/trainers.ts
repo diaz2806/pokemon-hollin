@@ -15,6 +15,8 @@ export interface TrainerData {
   name: string;
   /** "Gorrión", "Obrero", "Jefa de banda"... */
   className: string;
+  /** Sprite de combate de Essentials (assets/trainers/<battler>.png), opcional. */
+  battler?: string;
   party: TrainerPokemon[];
   /** Dinero que da al perder. */
   money: number;

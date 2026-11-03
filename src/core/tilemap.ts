@@ -123,6 +123,8 @@ export interface NpcData {
   x: number;
   y: number;
   sprite: string;
+  /** Personaje de Essentials/Gen 4 (assets/characters); si falta, se usa `sprite`. */
+  ow?: string;
   facing: Direction;
   dialog: string[];
   action?: NpcAction;

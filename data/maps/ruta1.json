@@ -93,8 +93,10 @@
     ],
     "after": [
      "Antes trabajaba en la fundición. Hasta que trajeron a los Pokémon."
-    ]
-   }
+    ],
+    "battler": "hiker"
+   },
+   "ow": "trchar044"
   },
   {
    "id": "chatarrero-bill",
@@ -126,8 +128,10 @@
     ],
     "after": [
      "En la escoria se encuentran cosas. Una vez encontré una Poké Ball entera."
-    ]
-   }
+    ],
+    "battler": "engineer"
+   },
+   "ow": "trchar107"
   },
   {
    "id": "pilluela-ivy",
@@ -159,8 +163,10 @@
     ],
     "after": [
      "Algún día seré jefa de banda. Como Mag."
-    ]
-   }
+    ],
+    "battler": "lass"
+   },
+   "ow": "trchar174"
   },
   {
    "id": "piquete",
@@ -172,7 +178,8 @@
     "¡Huelga en los Muelles!",
     "Hasta que Hargreave no pague lo que debe, aquí no pasa nadie.",
     "(Los Muelles llegarán en una próxima versión.)"
-   ]
+   ],
+   "ow": "trchar129"
   },
   {
    "id": "piquete2",
@@ -182,7 +189,8 @@
    "facing": "left",
    "dialog": [
     "¡Ni un barco más sin salario justo!"
-   ]
+   ],
+   "ow": "trchar130"
   },
   {
    "id": "piquete3",
@@ -192,7 +200,8 @@
    "facing": "left",
    "dialog": [
     "Mi padre está ahí dentro. Llevan tres días sin cobrar."
-   ]
+   ],
+   "ow": "trchar024"
   }
  ]
 }
