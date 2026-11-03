@@ -21,7 +21,7 @@ import { TextBox, Menu } from '../ui/TextBox';
 import { T, TILE_FRAMES } from '../ui/art/tiles';
 import { characterKey, followerPlaceholderKey, tileKey, FACINGS } from '../ui/art/textures';
 import { textStyle } from '../ui/TextBox';
-import { assetKey, hasTexture } from '../ui/assets';
+import { assetKey, ensureAssets, hasAsset, hasTexture } from '../ui/assets';
 import { PALETTE, GAME_W, GAME_H } from '../ui/palette';
 import type { BattleSceneData, BattleResult } from './BattleScene';
 import type { PartySceneData } from './PartyScene';
@@ -208,12 +208,24 @@ export class WorldScene extends Phaser.Scene {
     this.setCreatureFrame(this.followerSprite, lead.species, this.follower.facing, 0);
   }
 
-  /** Sprite de Pokémon en el mapa: oficial si existe en assets/, si no placeholder por tipo. */
+  /**
+   * Sprite de Pokémon en el mapa: oficial si existe en assets/, si no placeholder
+   * por tipo. Si el oficial aún no está cargado, se carga y se cambia al llegar.
+   */
   private creatureSprite(species: string, facing: Direction): Phaser.GameObjects.Sprite {
     const official = hasTexture(this, 'followers', species);
     const key = official ? assetKey('followers', species) : followerPlaceholderKey(speciesTypes(species)[0]);
     const sprite = this.add.sprite(0, 0, key, 0).setOrigin(0.5, 1);
     this.setCreatureFrame(sprite, species, facing, 0);
+    if (!official && hasAsset('followers', species)) {
+      void ensureAssets(this, [['followers', species]]).then(() => {
+        if (!sprite.active) return;
+        const frame = Number(sprite.frame.name) || 0;
+        sprite.setTexture(assetKey('followers', species));
+        const row = Math.floor(frame / 2);
+        sprite.setFrame(row * 4);
+      });
+    }
     return sprite;
   }
 

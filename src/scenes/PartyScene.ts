@@ -9,7 +9,7 @@ import { session } from '../game/session';
 import { controls } from '../ui/input';
 import { Menu, TextBox, textStyle } from '../ui/TextBox';
 import { PALETTE, UI, GAME_W, GAME_H } from '../ui/palette';
-import { assetKey, hasTexture } from '../ui/assets';
+import { assetKey, hasTexture, queueAssets } from '../ui/assets';
 import { followerPlaceholderKey } from '../ui/art/textures';
 
 export interface PartySceneData {
@@ -42,6 +42,11 @@ export class PartyScene extends Phaser.Scene {
 
   private get party(): PartyMember[] {
     return this.opts.party ?? session.state.party;
+  }
+
+  preload(): void {
+    const party = (this.scene.settings.data as PartySceneData | undefined)?.party ?? session.state.party;
+    queueAssets(this, party.map((m) => ['icons', m.species] as const).map(([k, s]) => [k, s]));
   }
 
   create(data: PartySceneData): void {
@@ -82,8 +87,12 @@ export class PartyScene extends Phaser.Scene {
   }
 
   private icon(species: string): Phaser.GameObjects.Image | Phaser.GameObjects.Sprite {
-    if (hasTexture(this, 'icons', species)) return this.add.image(0, 0, assetKey('icons', species)).setOrigin(0.5, 1).setScale(0.5);
-    if (hasTexture(this, 'followers', species)) return this.add.sprite(0, 0, assetKey('followers', species), 0).setOrigin(0.5, 1).setScale(0.5);
+    if (hasTexture(this, 'icons', species)) {
+      const icon = this.add.sprite(0, 0, assetKey('icons', species), 0).setOrigin(0.5, 0.85);
+      // Los iconos tienen dos fotogramas: se mueven como en los juegos.
+      this.time.addEvent({ delay: 280, loop: true, callback: () => icon.active && icon.setFrame(Number(icon.frame.name) === 0 ? 1 : 0) });
+      return icon;
+    }
     return this.add.sprite(0, 0, followerPlaceholderKey(speciesTypes(species)[0]), 0).setOrigin(0.5, 1);
   }
 

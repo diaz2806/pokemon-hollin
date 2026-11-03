@@ -53,7 +53,7 @@ Antes de dar algo por terminado: `npm run typecheck && npm test && npm run build
 
 ## Assets oficiales
 
-Sprites y música oficiales de Pokémon **nunca** se suben al repositorio (riesgo de DMCA). Van en `assets/`, que está en `.gitignore` (formato en `ASSETS.md`). Mientras no existan, el juego usa placeholders por tipo.
+Sprites y música oficiales de Pokémon **nunca** se suben al repositorio público (riesgo de DMCA). Van en `assets/` (en `.gitignore`), convertidos desde el Generation 9 Pack con `scripts/convert-essentials-pack.py` (formato en `ASSETS.md`), y se cargan bajo demanda (`src/ui/assets.ts`: `queueAssets` en preload, `ensureAssets` en caliente). El .exe con sprites se compila desde el repositorio privado `diaz2806/pokemon-hollin-assets`. Sin assets, placeholders por tipo.
 
 ## Alberto
 

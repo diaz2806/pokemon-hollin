@@ -13,7 +13,7 @@ import { markCaught } from '../core/game-state';
 import { session } from '../game/session';
 import { Menu, TextBox, drawFrame, textStyle } from '../ui/TextBox';
 import { PALETTE, UI, GAME_W } from '../ui/palette';
-import { assetKey, hasTexture } from '../ui/assets';
+import { assetKey, ensureAssets, hasTexture, queueAssets, transparentBottom } from '../ui/assets';
 import { battlerPlaceholderKey, characterKey } from '../ui/art/textures';
 import type { PartySceneData } from './PartyScene';
 
@@ -77,6 +77,17 @@ export class BattleScene extends Phaser.Scene {
     super('Battle');
   }
 
+  /** Carga los sprites oficiales de los que van a combatir (si existen en assets/). */
+  preload(): void {
+    // Phaser no pasa los datos a preload(): están en settings.data.
+    const data = this.scene.settings.data as BattleSceneData;
+    queueAssets(this, [
+      ...data.foes.map((f) => ['front', f.species] as ['front', string]),
+      ...session.state.party.map((m) => ['back', m.species] as ['back', string]),
+      ...session.state.party.map((m) => ['front', m.species] as ['front', string]),
+    ]);
+  }
+
   create(data: BattleSceneData): void {
     this.setup = data;
     this.party = session.state.party.map((m) => ({ ...m, moves: m.moves.map((mv) => ({ ...mv })) }));
@@ -87,8 +98,10 @@ export class BattleScene extends Phaser.Scene {
     this.adapter = new BattleAdapter(this.party, this.foeSpecs, { foeLabel: data.kind === 'wild' ? 'salvaje' : 'rival' });
 
     this.add.image(0, 0, 'bg-alley').setOrigin(0);
-    this.foeSprite = this.add.image(FOE_POS.x, FOE_POS.y, this.battlerTexture(this.adapter.opponent.species, false)).setOrigin(0.5, 1);
-    this.playerSprite = this.add.image(PLAYER_POS.x, PLAYER_POS.y, this.battlerTexture(this.adapter.player.species, true)).setOrigin(0.5, 1);
+    this.foeSprite = this.add.image(FOE_POS.x, FOE_POS.y, this.battlerTexture(this.adapter.opponent.species, false));
+    this.playerSprite = this.add.image(PLAYER_POS.x, PLAYER_POS.y, this.battlerTexture(this.adapter.player.species, true));
+    this.seat(this.foeSprite);
+    this.seat(this.playerSprite);
     this.foeBox = this.databox(false);
     this.playerBox = this.databox(true);
     this.textbox = new TextBox(this);
@@ -335,6 +348,7 @@ export class BattleScene extends Phaser.Scene {
     if (side === 'p1') {
       const p = this.adapter.player;
       this.playerSprite.setTexture(this.battlerTexture(p.species, true)).setAlpha(1).setPosition(GAME_W + 60, PLAYER_POS.y);
+      this.seat(this.playerSprite);
       this.refreshBox(this.playerBox, true);
       await this.say(`¡Adelante, ${p.name}!`, 600);
       await this.tween({ targets: this.playerSprite, x: PLAYER_POS.x, duration: 350 });
@@ -343,6 +357,7 @@ export class BattleScene extends Phaser.Scene {
       this.foeFainted = false;
       const f = this.adapter.opponent;
       this.foeSprite.setTexture(this.battlerTexture(f.species, false)).setAlpha(1).setScale(1).setPosition(-60, FOE_POS.y);
+      this.seat(this.foeSprite);
       this.refreshBox(this.foeBox, false);
       await this.say(`¡${this.setup.trainer?.name ?? 'El rival'} saca a ${f.name}!`, 600);
       await this.tween({ targets: this.foeSprite, x: FOE_POS.x, duration: 350 });
@@ -471,6 +486,7 @@ export class BattleScene extends Phaser.Scene {
       const into = out[i].hp > 0 ? pendingEvolution(out[i]) : null;
       if (!into) continue;
       const name = displayName(out[i]);
+      await ensureAssets(this, [['front', into]]);
       this.textbox.hide();
       this.cameras.main.flash(300, 255, 255, 255);
       await this.say(`¿Eh? ¡${name} está evolucionando!`);
@@ -494,6 +510,12 @@ export class BattleScene extends Phaser.Scene {
   }
 
   // ---------- Interfaz ----------
+
+  /** Apoya el dibujo sobre la plataforma: el origen pasa al primer píxel visible desde abajo. */
+  private seat(sprite: Phaser.GameObjects.Image): void {
+    const gap = transparentBottom(this, sprite.texture.key);
+    sprite.setOrigin(0.5, 1 - gap / sprite.height);
+  }
 
   private battlerTexture(species: string, back: boolean): string {
     const kind = back ? 'back' : 'front';

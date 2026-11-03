@@ -5,6 +5,8 @@ export default defineConfig({
   base: './',
   build: {
     chunkSizeWarningLimit: 4000,
+    // Sin incrustar imágenes en el JS: los sprites se cargan bajo demanda.
+    assetsInlineLimit: 0,
   },
   test: {
     include: ['tests/**/*.test.ts'],

@@ -28,6 +28,12 @@ export function speciesName(species: string): string {
   return dex().species.get(species).name;
 }
 
+/** id de la especie base ("Sandile-Ashbury" -> "sandile"). */
+export function speciesBaseId(species: string): string {
+  const s = dex().species.get(species);
+  return s.exists ? toId(s.baseSpecies) : toId(species);
+}
+
 export function speciesExists(species: string): boolean {
   return dex().species.get(species).exists;
 }

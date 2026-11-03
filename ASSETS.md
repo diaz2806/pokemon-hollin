@@ -1,26 +1,38 @@
-# Sprites oficiales (opcional, solo en local)
+# Sprites oficiales de Pokémon (solo en local o en un repositorio privado)
 
-El juego funciona sin ningún asset externo: todo el arte propio (tiles de Ashbury,
-personajes, interfaz) se genera por código, y los Pokémon usan placeholders de colores
-según su tipo.
+El juego funciona sin sprites oficiales: los Pokémon se ven como placeholders por tipo.
+Con sprites, se ven los de verdad en combate, en el menú de equipo y siguiéndote por el mapa.
 
-Si quieres ver los sprites oficiales de los Pokémon, ponlos en la carpeta `assets/`
-(está en `.gitignore`, **nunca se sube al repositorio**):
+**Nunca se suben a este repositorio público** (`assets/` está en `.gitignore`).
+
+## De dónde salen
+
+Del **Generation 9 Resource Pack** de Pokémon Essentials (Eevee Expo / PokéCommunity), que trae
+las 1025 especies: frente, espalda, iconos y seguidores.
+
+## Cómo se preparan
+
+El pack viene a resolución de Essentials (frente 192 px, espalda 288 px, seguidores 64 px por
+fotograma). El juego usa la resolución de DS, así que se convierten con:
+
+```bash
+python3 scripts/convert-essentials-pack.py "<pack>/Graphics" assets/pokemon
+```
+
+Resultado:
 
 ```
-assets/
-  pokemon/
-    front/      GROWLITHE.png   sprite de frente para el combate
-    back/       GROWLITHE.png   sprite de espalda para el combate
-    followers/  GROWLITHE.png   hoja 4x4 estilo RPG Maker (filas: abajo, izquierda, derecha, arriba)
-    icons/      GROWLITHE.png   icono del menú de equipo (opcional)
+assets/pokemon/
+  front/      growlithe.png   96x96, frente
+  back/       growlithe.png   96x96, espalda
+  icons/      growlithe.png   64x32 (2 fotogramas)
+  followers/  growlithe.png   128x128 (4x4: abajo, izquierda, derecha, arriba)
 ```
 
-- Los nombres valen en mayúsculas o minúsculas (`GROWLITHE.png` o `growlithe.png`): es el
-  mismo formato que usan los packs de recursos de Pokémon Essentials.
-- Los seguidores pueden tener cualquier tamaño de fotograma (32x32, 64x64...): se trocea la
-  hoja en 4x4.
-- Si falta un sprite, ese Pokémon usa su placeholder. No hace falta tenerlos todos.
+- Se cargan bajo demanda: solo los de las especies que aparecen.
+- Las formas sin sprite propio (Sandile de Ashbury) usan el de su especie base hasta que haya arte propio.
 
-Después: `npm run dev` y listo. Ojo: si haces `npm run build` con assets en local, se
-incluirán en `dist/`.
+## El .exe con sprites
+
+El `.exe` de las Releases públicas **no** lleva sprites oficiales. La versión con sprites se compila
+desde el repositorio privado de assets (ver su README), y sus Releases solo las ve el dueño.
