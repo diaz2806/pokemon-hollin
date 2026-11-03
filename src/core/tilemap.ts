@@ -3,6 +3,7 @@
  * Cada carácter es un tipo de casilla; ver TILE_CHARS.
  */
 import { step, type Direction, type Point } from './grid';
+import type { TrainerData } from './trainers';
 
 export type Tile =
   | 'cobble'
@@ -34,6 +35,12 @@ export type Tile =
   | 'pipes'
   | 'furnace'
   | 'cage'
+  | 'dirt'
+  | 'weeds'
+  | 'slag'
+  | 'fence'
+  | 'rails'
+  | 'gangDoor'
   | 'void';
 
 export const TILE_CHARS: Record<string, Tile> = {
@@ -67,10 +74,32 @@ export const TILE_CHARS: Record<string, Tile> = {
   p: 'pipes',
   O: 'furnace',
   C: 'cage',
+  ':': 'dirt',
+  v: 'weeds',
+  Z: 'slag',
+  F: 'fence',
+  '-': 'rails',
+  G: 'gangDoor',
   ' ': 'void',
 };
 
-const WALKABLE: ReadonlySet<Tile> = new Set(['cobble', 'smoke', 'pubDoor', 'quay', 'bridge', 'woodFloor', 'mat', 'grate']);
+const WALKABLE: ReadonlySet<Tile> = new Set([
+  'cobble',
+  'smoke',
+  'pubDoor',
+  'gangDoor',
+  'quay',
+  'bridge',
+  'woodFloor',
+  'mat',
+  'grate',
+  'dirt',
+  'weeds',
+  'rails',
+]);
+
+/** Casillas donde salen Pokémon salvajes (callejones con humo y hierba seca). */
+const ENCOUNTER_TILES: ReadonlySet<Tile> = new Set(['smoke', 'weeds']);
 
 /** Casillas "mostrador": hablas con quien está al otro lado (como en los Centros Pokémon). */
 const COUNTERS: ReadonlySet<Tile> = new Set(['counter', 'stall']);
@@ -87,7 +116,7 @@ export interface Warp {
   blockedText?: string[];
 }
 
-export type NpcAction = 'heal' | 'cage' | 'giveBalls' | 'giftSandile';
+export type NpcAction = 'heal' | 'cage' | 'giveBalls' | 'giftSandile' | 'shop';
 
 export interface NpcData {
   id: string;
@@ -99,6 +128,8 @@ export interface NpcData {
   action?: NpcAction;
   /** Para jaulas y Pokémon en el mapa: qué especie es. */
   species?: string;
+  /** Si es entrenador: su equipo, diálogos y recompensa. */
+  trainer?: TrainerData;
   /** Solo aparece si el flag está activo / inactivo. */
   ifFlag?: string;
   unlessFlag?: string;
@@ -159,6 +190,10 @@ export class TileMap {
 
   isWalkableTile(p: Point): boolean {
     return WALKABLE.has(this.tileAt(p));
+  }
+
+  isEncounterTile(p: Point): boolean {
+    return ENCOUNTER_TILES.has(this.tileAt(p));
   }
 
   isCounter(p: Point): boolean {

@@ -13,12 +13,14 @@ import { rollEncounter } from '../core/encounters';
 import { addCaught, anyAble, displayName, firstAbleIndex } from '../core/party';
 import { markCaught, markSeen } from '../core/game-state';
 import { createMember, healMember, speciesTypes } from '../battle/dex-service';
-import { MAPS, ENCOUNTER_TABLES, STARTERS } from '../game/content';
+import { MAPS, ENCOUNTER_TABLES, STARTERS, FICHAS, SHOP } from '../game/content';
+import { defeatFlag, findSpotter, isDefeated, type Spotted } from '../core/trainers';
 import { session } from '../game/session';
 import { controls } from '../ui/input';
 import { TextBox, Menu } from '../ui/TextBox';
-import { T } from '../ui/art/tiles';
+import { T, TILE_FRAMES } from '../ui/art/tiles';
 import { characterKey, followerPlaceholderKey, tileKey, FACINGS } from '../ui/art/textures';
+import { textStyle } from '../ui/TextBox';
 import { assetKey, hasTexture } from '../ui/assets';
 import { PALETTE, GAME_W, GAME_H } from '../ui/palette';
 import type { BattleSceneData, BattleResult } from './BattleScene';
@@ -53,6 +55,8 @@ export class WorldScene extends Phaser.Scene {
   private turnTimer = 0;
   private animClock = 0;
   private emitters: Phaser.GameObjects.Particles.ParticleEmitter[] = [];
+  /** Entrenador con el que se está combatiendo (para marcarlo al ganar). */
+  private pendingTrainer: NpcData | null = null;
 
   constructor() {
     super('World');
@@ -133,7 +137,7 @@ export class WorldScene extends Phaser.Scene {
         const tile = this.map.tileAt({ x, y });
         const image = this.add.image(x * T, y * T, tileKey(tile, 0)).setOrigin(0);
         this.mapLayer.add(image);
-        const frames = tile === 'water' || tile === 'furnace' || tile === 'window' ? 2 : 1;
+        const frames = TILE_FRAMES[tile] ?? 1;
         if (frames > 1) this.animated.push({ image, tile, frames });
       }
     }
@@ -158,7 +162,8 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private spawnNpcs(): void {
-    this.npcs = visibleNpcs(this.map.data, this.state.flags);
+    // Copias: los entrenadores se mueven al verte y no queremos tocar los datos del mapa.
+    this.npcs = visibleNpcs(this.map.data, this.state.flags).map((n) => ({ ...n }));
     for (const npc of this.npcs) {
       let sprite: Phaser.GameObjects.Sprite;
       if ((npc.sprite === 'cage' || npc.sprite === 'creature') && npc.species) {
@@ -342,7 +347,14 @@ export class WorldScene extends Phaser.Scene {
       });
       return;
     }
-    if (this.map.tileAt(this.state.pos) === 'smoke' && this.map.data.encounterTable && anyAble(this.state.party)) {
+    if (anyAble(this.state.party)) {
+      const spotted = findSpotter(this.map, this.npcs, this.state.flags, this.state.pos);
+      if (spotted) {
+        await this.lock(() => this.trainerApproach(spotted));
+        return;
+      }
+    }
+    if (this.map.isEncounterTile(this.state.pos) && this.map.data.encounterTable && anyAble(this.state.party)) {
       const wild = rollEncounter(ENCOUNTER_TABLES[this.map.data.encounterTable], Math.random);
       if (wild) await this.lock(() => this.startWildBattle(wild.species, wild.level, wild.moves));
     }
@@ -367,7 +379,14 @@ export class WorldScene extends Phaser.Scene {
   private async talkTo(npc: NpcData): Promise<void> {
     const sprite = this.npcSprites.get(npc.id);
     if (sprite && npc.sprite !== 'cage' && npc.sprite !== 'creature') sprite.setFrame(ROW[opposite(this.state.facing)] * 3);
+    if (npc.trainer) {
+      if (isDefeated(this.state.flags, this.map.data.id, npc)) return this.textbox.say(npc.trainer.after);
+      if (!anyAble(this.state.party)) return this.textbox.say('Ahora mismo no tienes Pokémon en condiciones de luchar.');
+      return this.trainerBattle(npc);
+    }
     switch (npc.action) {
+      case 'shop':
+        return this.shop(npc);
       case 'heal':
         return this.healAtPub(npc);
       case 'cage':
@@ -443,6 +462,101 @@ export class WorldScene extends Phaser.Scene {
     await this.textbox.say('¡Has recibido 5 Poké Balls!');
   }
 
+  // ---------- Entrenadores ----------
+
+  /** Un entrenador te ha visto: "!", viene hacia ti y te reta. */
+  private async trainerApproach(spotted: Spotted): Promise<void> {
+    const { npc, path } = spotted;
+    const sprite = this.npcSprites.get(npc.id);
+    if (!sprite) return;
+    const mark = this.add.text(sprite.x, sprite.y - 26, '!', { ...textStyle('#e8c46a'), fontSize: '16px' }).setOrigin(0.5).setDepth(900);
+    mark.setShadow(1, 1, '#000000', 0, false, true);
+    await this.wait(700);
+    mark.destroy();
+    for (const p of path) {
+      sprite.setFrame(ROW[npc.facing] * 3 + (p.x + p.y) % 2 + 1);
+      await new Promise<void>((r) =>
+        this.tweens.add({ targets: sprite, x: p.x * T + 8, y: p.y * T + T, duration: WALK_MS, onComplete: () => r() }),
+      );
+      npc.x = p.x;
+      npc.y = p.y;
+      sprite.setDepth(p.y * 10 + 5).setFrame(ROW[npc.facing] * 3);
+    }
+    this.face(opposite(npc.facing));
+    await this.trainerBattle(npc);
+  }
+
+  private async trainerBattle(npc: NpcData): Promise<void> {
+    const t = npc.trainer!;
+    const sprite = this.npcSprites.get(npc.id);
+    sprite?.setFrame(ROW[opposite(this.state.facing)] * 3);
+    await this.textbox.say(t.intro);
+    for (const p of t.party) markSeen(this.state, p.species);
+    this.pendingTrainer = npc;
+    await this.transitionToBattle({
+      kind: 'trainer',
+      foes: t.party,
+      trainer: { name: t.name, className: t.className, sprite: npc.sprite, money: t.money, defeat: t.defeat },
+    });
+  }
+
+  private async afterTrainerWin(npc: NpcData): Promise<void> {
+    const t = npc.trainer!;
+    this.state.flags[defeatFlag(this.map.data.id, npc.id)] = true;
+    if (!t.reward) return;
+    const sprite = this.npcSprites.get(npc.id);
+    sprite?.setFrame(ROW[opposite(this.state.facing)] * 3);
+    for (const flag of t.reward.flags) this.state.flags[flag] = true;
+    if (t.reward.items?.pokeball) this.state.bag.pokeball += t.reward.items.pokeball;
+    if (t.reward.items?.potion) this.state.bag.potion += t.reward.items.potion;
+    if (t.reward.flags.some((f) => f.startsWith('ficha_'))) this.cameras.main.flash(400, 232, 196, 106);
+    await this.textbox.say([...t.reward.text, ...t.after]);
+    // Los NPC que dependen de la ficha (el guardia) cambian.
+    this.refreshNpcs();
+  }
+
+  /** Vuelve a colocar los NPC del mapa actual según los flags (sin mover al jugador). */
+  private refreshNpcs(): void {
+    const moved = new Map(this.npcs.map((n) => [n.id, { x: n.x, y: n.y }]));
+    this.npcSprites.forEach((s) => s.destroy());
+    this.npcSprites.clear();
+    this.spawnNpcs();
+    for (const n of this.npcs) {
+      const pos = moved.get(n.id);
+      if (!pos) continue;
+      n.x = pos.x;
+      n.y = pos.y;
+      this.npcSprites.get(n.id)?.setPosition(pos.x * T + 8, pos.y * T + T).setDepth(pos.y * 10 + 5);
+    }
+  }
+
+  // ---------- Tienda ----------
+
+  private async shop(npc: NpcData): Promise<void> {
+    if (!this.state.flags.gotBalls) {
+      await this.giveBalls(npc);
+      return;
+    }
+    await this.textbox.say('¡Poké Balls y pociones! ¡Lo mejor del Mercado, casi sin robar!', { keepOpen: true });
+    for (;;) {
+      await this.textbox.type(`Tienes ${this.state.money} chelines. ¿Qué te llevas?`);
+      const options = [...SHOP.map((i) => `${i.name.padEnd(9)} ${String(i.price).padStart(4)}`), 'NADA'];
+      const menu = new Menu(this, options, { right: GAME_W - 2, bottom: 140 });
+      const choice = await menu.choose(options.length - 1);
+      menu.destroy();
+      if (choice < 0 || choice >= SHOP.length) break;
+      const item = SHOP[choice];
+      if (this.state.money < item.price) {
+        await this.textbox.say('No te llega, chaval. Aquí no se fía.', { keepOpen: true });
+        continue;
+      }
+      this.state.money -= item.price;
+      this.state.bag[item.item]++;
+      await this.textbox.say(`¡Has comprado una ${item.name}!`, { keepOpen: true });
+    }
+    await this.textbox.say('¡Vuelve cuando quieras!');
+  }
+
   /** Evento del Pokémon emblema: un Sandile de Ashbury hambriento en los callejones. */
   private async giftSandile(npc: NpcData): Promise<void> {
     await this.textbox.say(npc.dialog, { keepOpen: true });
@@ -484,10 +598,20 @@ export class WorldScene extends Phaser.Scene {
   // ---------- Menú de pausa ----------
 
   private async pauseMenu(): Promise<void> {
-    const options = ['POKéMON', 'MOCHILA', 'GUARDAR', 'SALIR'];
+    const options = ['POKéMON', 'MOCHILA', 'FICHAS', 'GUARDAR', 'SALIR'];
     const menu = new Menu(this, options, { right: GAME_W - 2, y: 2 });
-    const choice = await menu.choose(3);
+    let choice = await menu.choose(4);
     menu.destroy();
+    if (choice === 2) {
+      const got = FICHAS.filter((f) => this.state.flags[f.flag]);
+      await this.textbox.say(
+        got.length === 0
+          ? ['Todavía no tienes ninguna ficha de banda.', 'Gana a los jefes de las bandas de Ashbury para conseguirlas.']
+          : [`Fichas: ${got.length} de ${FICHAS.length}.`, ...got.map((f) => `${f.name} (${f.gang})`)],
+      );
+      return;
+    }
+    if (choice > 2) choice--;
     if (choice === 0) {
       if (this.state.party.length === 0) await this.textbox.say('No llevas ningún Pokémon.');
       else await this.openParty({ mode: 'view' });
@@ -548,6 +672,11 @@ export class WorldScene extends Phaser.Scene {
 
   private async startWildBattle(species: string, level: number, moves?: string[]): Promise<void> {
     markSeen(this.state, species);
+    this.pendingTrainer = null;
+    await this.transitionToBattle({ kind: 'wild', foes: [{ species, level, moves }] });
+  }
+
+  private async transitionToBattle(data: BattleSceneData): Promise<void> {
     controls.flush();
     const cam = this.cameras.main;
     for (let i = 0; i < 2; i++) {
@@ -555,7 +684,6 @@ export class WorldScene extends Phaser.Scene {
       await this.wait(160);
     }
     await this.fade(true, 250);
-    const data: BattleSceneData = { kind: 'wild', foes: [{ species, level, moves }] };
     this.scene.launch('Battle', data);
     this.scene.sleep();
     this.busy = true; // se libera en onWake
@@ -577,6 +705,9 @@ export class WorldScene extends Phaser.Scene {
         await this.fade(false);
         await this.textbox.say('El tabernero ha cuidado de tus Pokémon mientras dormías.');
       }
+      const trainer = this.pendingTrainer;
+      this.pendingTrainer = null;
+      if (trainer && result?.outcome === 'won') await this.afterTrainerWin(trainer);
       if (result?.caughtNew) await this.textbox.say(`${result.caughtNew} se ha unido a tu equipo.`);
       this.busy = false;
       controls.flush();

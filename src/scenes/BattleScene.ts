@@ -14,13 +14,20 @@ import { session } from '../game/session';
 import { Menu, TextBox, drawFrame, textStyle } from '../ui/TextBox';
 import { PALETTE, UI, GAME_W } from '../ui/palette';
 import { assetKey, hasTexture } from '../ui/assets';
-import { battlerPlaceholderKey } from '../ui/art/textures';
+import { battlerPlaceholderKey, characterKey } from '../ui/art/textures';
 import type { PartySceneData } from './PartyScene';
 
 export interface BattleSceneData {
   kind: 'wild' | 'trainer';
   foes: { species: string; level: number; moves?: string[] }[];
-  trainerName?: string;
+  trainer?: {
+    name: string;
+    className: string;
+    /** Paleta de personaje (para dibujarlo al empezar y al acabar). */
+    sprite: string;
+    money: number;
+    defeat: string[];
+  };
 }
 
 export interface BattleResult {
@@ -97,11 +104,21 @@ export class BattleScene extends Phaser.Scene {
     this.playerSprite.x = GAME_W + 60;
     this.foeBox.container.setVisible(false);
     this.playerBox.container.setVisible(false);
-    await this.tween({ targets: this.foeSprite, x: FOE_POS.x, duration: 600, ease: 'Quad.Out' });
+    const t = this.setup.trainer;
+    const foe = this.adapter.opponent;
+    if (t) {
+      // El entrenador aparece primero, reta al jugador y se aparta.
+      const trainerSprite = this.add.sprite(-60, FOE_POS.y + 2, characterKey(t.sprite), 0).setOrigin(0.5, 1).setScale(3).setDepth(10);
+      await this.tween({ targets: trainerSprite, x: FOE_POS.x, duration: 600, ease: 'Quad.Out' });
+      await this.say(`¡${t.className} ${t.name} te desafía!`);
+      await this.tween({ targets: trainerSprite, x: GAME_W + 60, duration: 400, ease: 'Quad.In' });
+      trainerSprite.destroy();
+      await this.say(`¡${t.name} saca a ${foe.name}!`, 700);
+    }
+    await this.tween({ targets: this.foeSprite, x: FOE_POS.x, duration: t ? 350 : 600, ease: 'Quad.Out' });
     this.refreshBox(this.foeBox, false);
     this.foeBox.container.setVisible(true);
-    const foe = this.adapter.opponent;
-    await this.say(this.setup.kind === 'wild' ? `¡Un ${foe.name} salvaje sale de entre el humo!` : `¡${this.setup.trainerName} saca a ${foe.name}!`);
+    if (!t) await this.say(`¡Un ${foe.name} salvaje sale de entre el humo!`);
     await this.say(`¡Adelante, ${this.adapter.player.name}!`, 700);
     await this.tween({ targets: this.playerSprite, x: PLAYER_POS.x, duration: 400, ease: 'Quad.Out' });
     this.refreshBox(this.playerBox, true);
@@ -327,7 +344,7 @@ export class BattleScene extends Phaser.Scene {
       const f = this.adapter.opponent;
       this.foeSprite.setTexture(this.battlerTexture(f.species, false)).setAlpha(1).setScale(1).setPosition(-60, FOE_POS.y);
       this.refreshBox(this.foeBox, false);
-      await this.say(`¡${this.setup.trainerName ?? 'El rival'} saca a ${f.name}!`, 600);
+      await this.say(`¡${this.setup.trainer?.name ?? 'El rival'} saca a ${f.name}!`, 600);
       await this.tween({ targets: this.foeSprite, x: FOE_POS.x, duration: 350 });
     }
   }
@@ -355,6 +372,15 @@ export class BattleScene extends Phaser.Scene {
     } else if (this.adapter.winner === 'player') {
       outcome = 'won';
       party = await this.awardExp(party);
+      const t = this.setup.trainer;
+      if (t) {
+        const sprite = this.add.sprite(GAME_W + 60, FOE_POS.y + 2, characterKey(t.sprite), 0).setOrigin(0.5, 1).setScale(3).setDepth(10);
+        await this.tween({ targets: sprite, x: FOE_POS.x, duration: 400 });
+        await this.say(`¡Has derrotado a ${t.className} ${t.name}!`);
+        await this.say(t.defeat);
+        session.state.money += t.money;
+        await this.say(`¡Has ganado ${t.money} chelines!`);
+      }
     } else {
       outcome = 'lost';
       await this.say(['¡No te quedan Pokémon en condiciones de luchar!', 'Todo se vuelve negro entre el humo...']);

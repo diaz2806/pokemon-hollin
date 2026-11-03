@@ -9,6 +9,8 @@ import mercadoJson from '../data/maps/mercado.json';
 import pubJson from '../data/maps/pub.json';
 import fabricaJson from '../data/maps/fabrica.json';
 import mercadoTable from '../data/encounters/mercado-callejones.json';
+import { MAPS, ENCOUNTER_TABLES } from '../src/game/content';
+import { findSpotter, defeatFlag } from '../src/core/trainers';
 
 const mercado = mercadoJson as MapData;
 const pub = pubJson as MapData;
@@ -48,11 +50,12 @@ describe('Follower', () => {
 
 describe('Mapas', () => {
   it('todos los mapas cargan y sus warps llevan a casillas transitables', () => {
-    const maps = { mercado, pub, fabrica };
+    const maps = MAPS;
     for (const data of Object.values(maps)) {
       const map = new TileMap(data);
       for (const w of data.warps ?? []) {
-        const dest = new TileMap(maps[w.to as keyof typeof maps]);
+        expect(maps[w.to], `${data.id} -> ${w.to}`).toBeDefined();
+        const dest = new TileMap(maps[w.to]);
         expect(dest.isWalkableTile({ x: w.toX, y: w.toY }), `${data.id} -> ${w.to}`).toBe(true);
         expect(map.warpAt({ x: w.x, y: w.y })).toBe(w);
       }
@@ -159,5 +162,35 @@ describe('Guardado', () => {
     expect(loadGame(storage)).toBeNull();
     storage.setItem('pokemon-hollin/save', JSON.stringify({ ...newGame(), version: 999 }));
     expect(loadGame(storage)).toBeNull();
+  });
+});
+
+describe('Entrenadores', () => {
+  const almacen = MAPS.almacen;
+  const map = new TileMap(almacen);
+  const npcs = visibleNpcs(almacen, {});
+
+  it('un entrenador te ve si estás en su línea de visión', () => {
+    const spotted = findSpotter(map, npcs, {}, { x: 6, y: 6 });
+    expect(spotted?.npc.id).toBe('gorrion-nell');
+    expect(spotted?.path).toEqual([{ x: 3, y: 6 }, { x: 4, y: 6 }, { x: 5, y: 6 }]);
+  });
+
+  it('no te ve fuera de su alcance ni si ya le has ganado', () => {
+    expect(findSpotter(map, npcs, {}, { x: 8, y: 6 })).toBeNull();
+    expect(findSpotter(map, npcs, { [defeatFlag('almacen', 'gorrion-nell')]: true }, { x: 6, y: 6 })).toBeNull();
+  });
+
+  it('las paredes y objetos cortan la vista', () => {
+    // Sid mira a la izquierda desde (11,3); en (6,3) te ve, pero no a través de las cajas.
+    expect(findSpotter(map, npcs, {}, { x: 6, y: 3 })?.npc.id).toBe('gorrion-sid');
+  });
+
+  it('todos los equipos de entrenadores y tablas usan especies que existen', async () => {
+    const { speciesExists } = await import('../src/battle/dex-service');
+    for (const data of Object.values(MAPS)) {
+      for (const n of data.npcs ?? []) for (const p of n.trainer?.party ?? []) expect(speciesExists(p.species), `${n.id}: ${p.species}`).toBe(true);
+    }
+    for (const t of Object.values(ENCOUNTER_TABLES)) for (const s of t.slots) expect(speciesExists(s.species), s.species).toBe(true);
   });
 });

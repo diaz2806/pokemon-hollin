@@ -7,7 +7,7 @@
   "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR",
   "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE",
   "##W#W##W#W##W#V##W#W###V#V##V#V#",
-  "###W##B#W####D####D#######DD####",
+  "###W##B#W####D####D#######GG####",
   "#......S.......................#",
   "#..L.......L........L.......L...",
   "#...P...........................",
@@ -42,6 +42,56 @@
    "toX": 5,
    "toY": 7,
    "facing": "up"
+  },
+  {
+   "x": 26,
+   "y": 4,
+   "to": "almacen",
+   "toX": 6,
+   "toY": 8,
+   "facing": "up",
+   "requires": "beat_mercado_gorrion-puerta",
+   "blockedText": [
+    "Un Gorrión te corta el paso:",
+    "«Eh, tú. Nadie entra en la guarida sin hablar antes conmigo.»"
+   ]
+  },
+  {
+   "x": 27,
+   "y": 4,
+   "to": "almacen",
+   "toX": 7,
+   "toY": 8,
+   "facing": "up",
+   "requires": "beat_mercado_gorrion-puerta",
+   "blockedText": [
+    "Un Gorrión te corta el paso:",
+    "«Eh, tú. Nadie entra en la guarida sin hablar antes conmigo.»"
+   ]
+  },
+  {
+   "x": 31,
+   "y": 6,
+   "to": "ruta1",
+   "toX": 1,
+   "toY": 8,
+   "facing": "right"
+  },
+  {
+   "x": 31,
+   "y": 7,
+   "to": "ruta1",
+   "toX": 1,
+   "toY": 9,
+   "facing": "right"
+  },
+  {
+   "x": 31,
+   "y": 8,
+   "to": "ruta1",
+   "toX": 1,
+   "toY": 10,
+   "facing": "right"
   }
  ],
  "signs": [
@@ -65,8 +115,9 @@
    "dialog": [
     "¡Alto ahí, chaval!",
     "Nadie sale del Mercado sin licencia de Hargreave Industries.",
-    "Y menos con un Pokémon. Esos bichos son propiedad de la fábrica."
-   ]
+    "...A no ser que vengas de parte de Los Gorriones. Ellos saben a quién pagar."
+   ],
+   "unlessFlag": "ficha_mercado"
   },
   {
    "id": "pilluelo",
@@ -75,9 +126,9 @@
    "sprite": "urchin",
    "facing": "down",
    "dialog": [
-    "¿Has bajado a los callejones del sur?",
-    "Con tanto humo salen Pokémon de las alcantarillas.",
-    "Si tienes uno, puedes pelear con ellos... o atraparlos."
+    "¿Ves el almacén de la esquina, el de la puerta con el pájaro pintado?",
+    "Es la guarida de Los Gorriones, la banda del Mercado.",
+    "Si les ganas, hasta los guardias te dejarán pasar. Están todos comprados."
    ]
   },
   {
@@ -86,7 +137,7 @@
    "y": 10,
    "sprite": "lady",
    "facing": "down",
-   "action": "giveBalls",
+   "action": "shop",
    "dialog": [
     "¡Poké Balls de hojalata! Recién salidas de la fábrica.",
     "...Bueno, no preguntes cómo han llegado aquí."
@@ -127,6 +178,51 @@
     "Entre las cajas hay un Sandile flaco y negro de hollín.",
     "Te enseña los dientes... pero le ruge la tripa."
    ]
+  },
+  {
+   "id": "guardia-comprado",
+   "x": 30,
+   "y": 5,
+   "sprite": "copper",
+   "facing": "down",
+   "ifFlag": "ficha_mercado",
+   "dialog": [
+    "...¿Esa ficha es de Mag la Urraca?",
+    "Circula, chaval. Yo no te he visto."
+   ]
+  },
+  {
+   "id": "gorrion-puerta",
+   "x": 25,
+   "y": 5,
+   "sprite": "urchin",
+   "facing": "right",
+   "dialog": [],
+   "trainer": {
+    "name": "Kit",
+    "className": "Gorrión",
+    "money": 120,
+    "sight": 0,
+    "party": [
+     {
+      "species": "Rattata",
+      "level": 6
+     },
+     {
+      "species": "Pidove",
+      "level": 6
+     }
+    ],
+    "intro": [
+     "¿Quieres entrar en la guarida? Primero tendrás que pasar por encima de mí."
+    ],
+    "defeat": [
+     "¡Vale, vale! Pasa, pero Mag te va a desplumar."
+    ],
+    "after": [
+     "La jefa está al fondo. No le toques los bolsillos."
+    ]
+   }
   }
  ]
 }

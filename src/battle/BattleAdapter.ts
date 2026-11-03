@@ -208,7 +208,14 @@ export class BattleAdapter {
     if (sdIndex < 0) throw new Error(`No existe el Pokémon ${partyIndex}`);
     const forced = this.needsSwitch;
     this.battle.choose('p1', `switch ${sdIndex + 1}`);
-    if (!forced) this.chooseOpponent();
+    if (!forced) {
+      this.chooseOpponent();
+    } else {
+      // Si los dos se debilitaron a la vez, el rival también tiene que elegir.
+      const req = this.battle.p2.activeRequest;
+      if (req && !req.wait && req.forceSwitch) this.chooseOpponent();
+    }
+    this.settleOpponent();
     this.participants.add(partyIndex);
     return this.flush();
   }
@@ -300,7 +307,21 @@ export class BattleAdapter {
   private runTurn(playerChoice: string): BattleStep[] {
     this.battle.choose('p1', playerChoice);
     this.chooseOpponent();
+    this.settleOpponent();
     return this.flush();
+  }
+
+  /**
+   * Si el rival tiene que sacar otro Pokémon (el suyo se debilitó) y el jugador
+   * no tiene nada pendiente, lo saca ya para que el combate siga.
+   */
+  private settleOpponent(): void {
+    for (let guard = 0; guard < 6; guard++) {
+      const req = this.battle.p2.activeRequest;
+      if (this.battle.ended || !req || req.wait || !req.forceSwitch) return;
+      if (this.battle.p1.activeRequest?.forceSwitch) return; // primero elige el jugador
+      this.chooseOpponent();
+    }
   }
 
   private chooseOpponent(): void {

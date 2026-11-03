@@ -40,7 +40,9 @@ Antes de dar algo por terminado: `npm run typecheck && npm test && npm run build
 - Showdown asume 3 Más PP; `BattleAdapter` los quita y aplica los PS/PP guardados.
 - Formato de mapas temporal: filas de texto en `data/maps/*.json` (leyenda en `src/core/tilemap.ts`). Cuando el mundo crezca, migrar a Tiled.
 - `?debug` en la URL expone `__game` y `__session` en la consola.
-- Limitaciones conocidas: sin combates de entrenador todavía; si un Pokémon sube de nivel en mitad de un combate contra varios, sus stats se actualizan al acabar.
+- Entrenadores: `trainer` dentro de cada NPC del mapa (`src/core/trainers.ts`): equipo, `sight` (casillas de visión), diálogos, dinero y `reward` (flags como `ficha_mercado`, objetos). Derrotado = flag `beat_<mapa>_<npc>`. `BattleAdapter` saca solo el siguiente Pokémon del rival (`settleOpponent`).
+- Fichas de banda en `src/game/content.ts` (`FICHAS`). Hecha: Mercado (Los Gorriones, Mag la Urraca). Siguiente: Muelles (la Ruta 1 termina en un piquete de huelga).
+- Limitaciones conocidas: si un Pokémon sube de nivel en mitad de un combate contra varios, sus stats se actualizan al acabar.
 
 ## Convenciones
 

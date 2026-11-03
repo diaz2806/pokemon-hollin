@@ -22,7 +22,11 @@ Ya se puede jugar el arranque de la historia:
 - **Estado propio Tiznado** (movimiento Hollinazo): el humo hace fallar ataques y oculta la vida del rival.
 - **Pokémon emblema: Sandile de Ashbury** (Veneno/Siniestro) y su cadena evolutiva, con su movimiento exclusivo **Emboscada** (doble de potencia contra rivales tiznados). Hay uno hambriento escondido en los callejones del Mercado.
 - **Todas las generaciones**: las 1025 especies y todos los movimientos funcionan, con sus nombres oficiales en español.
-- **Guardado** en el navegador y **controles táctiles** en el móvil.
+- **Entrenadores** que te ven, te salen al paso y te retan; ganas dinero al vencerlos.
+- **Primera banda: Los Gorriones**, en su almacén del Mercado. Su jefa, Mag la Urraca, te da la **Ficha del Mercado**, y con ella los guardias te dejan salir de la ciudad.
+- **Ruta 1, Camino de la Escoria**: hierba seca entre montones de escoria, con 31 especies de las 9 generaciones y tres entrenadores.
+- **Tienda** en el Mercado (Poké Balls y Pociones) y menú de **fichas**.
+- **Guardado** en el PC y **controles táctiles** en el móvil.
 
 El arte de la ciudad y los personajes es pixel art original generado por código. Los Pokémon
 usan placeholders por tipo; si tienes sprites oficiales en local, el juego los usa

@@ -1,0 +1,192 @@
+{
+ "id": "ruta1-escoria",
+ "rate": 0.14,
+ "slots": [
+  {
+   "species": "Spearow",
+   "weight": 8,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Ekans",
+   "weight": 6,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Mankey",
+   "weight": 5,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Machop",
+   "weight": 5,
+   "minLevel": 6,
+   "maxLevel": 8
+  },
+  {
+   "species": "Geodude",
+   "weight": 6,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Diglett",
+   "weight": 5,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Sentret",
+   "weight": 6,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Hoothoot",
+   "weight": 3,
+   "minLevel": 6,
+   "maxLevel": 8
+  },
+  {
+   "species": "Zigzagoon",
+   "weight": 6,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Nincada",
+   "weight": 3,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Starly",
+   "weight": 6,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Bidoof",
+   "weight": 6,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Shinx",
+   "weight": 3,
+   "minLevel": 6,
+   "maxLevel": 8
+  },
+  {
+   "species": "Croagunk",
+   "weight": 3,
+   "minLevel": 6,
+   "maxLevel": 8
+  },
+  {
+   "species": "Venipede",
+   "weight": 5,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Drilbur",
+   "weight": 3,
+   "minLevel": 6,
+   "maxLevel": 8
+  },
+  {
+   "species": "Scraggy",
+   "weight": 3,
+   "minLevel": 6,
+   "maxLevel": 8
+  },
+  {
+   "species": "Sewaddle",
+   "weight": 4,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Bunnelby",
+   "weight": 5,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Litleo",
+   "weight": 2,
+   "minLevel": 6,
+   "maxLevel": 8
+  },
+  {
+   "species": "Pikipek",
+   "weight": 4,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Grubbin",
+   "weight": 3,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Mudbray",
+   "weight": 2,
+   "minLevel": 6,
+   "maxLevel": 8
+  },
+  {
+   "species": "Rockruff",
+   "weight": 2,
+   "minLevel": 6,
+   "maxLevel": 8
+  },
+  {
+   "species": "Skwovet",
+   "weight": 5,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Wooloo",
+   "weight": 3,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Blipbug",
+   "weight": 3,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Lechonk",
+   "weight": 5,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Tarountula",
+   "weight": 3,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Nymble",
+   "weight": 3,
+   "minLevel": 5,
+   "maxLevel": 7
+  },
+  {
+   "species": "Sandile-Ashbury",
+   "weight": 2,
+   "minLevel": 6,
+   "maxLevel": 8
+  }
+ ]
+}

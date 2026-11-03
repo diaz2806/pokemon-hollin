@@ -1,0 +1,198 @@
+{
+ "id": "ruta1",
+ "name": "Camino de la Escoria",
+ "encounterTable": "ruta1-escoria",
+ "rows": [
+  "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+  "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+  "F::::ZZ:::::::::::::ZZ::::::::::::::Z::::::F",
+  "F:::::::::::Z:::::::::::::::::Z::::::::::::F",
+  "F------------------------------------------F",
+  "F::::::::::::::::::::::::::::::::::::::::::F",
+  "F:::vvvvvv:Z:::::::::::vvvvvvZ::::::::::Z::F",
+  "F:S:vvvvvv:Z:::::::::::vvvvvvZ::::::::vvvv:F",
+  "::::vvvvvv:Z:::::::::::vvvvvvZ::::::::vvvv::",
+  ":::::::::::Z:::::::::::vvvvvvZ::::::::vvvv::",
+  ":::::::::::Z:::::::::Z::::::::::::::::::::::",
+  "F::::::::::::vvvvvvv:Z::::::::vvvvvvvv:::::F",
+  "F::::::::::::vvvvvvv:Z::::::::vvvvvvvv:::::F",
+  "F:vvvvvv:::::vvvvvvv:Z::::::::vvvvvvvv:::::F",
+  "F:vvvvvv:::::vvvvvvv:Z::::::::vvvvvvvv:::::F",
+  "F:vvvvvv:ZZ::vvvvvvv:Z::::::::vvvvvvvv:::::F",
+  "F:vvvvvv:::::::::::::::::ZZ::::::::::::::::F",
+  "F::::::::::::::::::::::::::::::::::::::::::F",
+  "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+  "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+ ],
+ "warps": [
+  {
+   "x": 0,
+   "y": 8,
+   "to": "mercado",
+   "toX": 30,
+   "toY": 6,
+   "facing": "left"
+  },
+  {
+   "x": 0,
+   "y": 9,
+   "to": "mercado",
+   "toX": 30,
+   "toY": 7,
+   "facing": "left"
+  },
+  {
+   "x": 0,
+   "y": 10,
+   "to": "mercado",
+   "toX": 30,
+   "toY": 8,
+   "facing": "left"
+  }
+ ],
+ "signs": [
+  {
+   "x": 2,
+   "y": 7,
+   "text": [
+    "CAMINO DE LA ESCORIA",
+    "Oeste: El Mercado. Este: Los Muelles.",
+    "Prohibido tirar escoria fuera de los montones. — Hargreave Industries"
+   ]
+  }
+ ],
+ "npcs": [
+  {
+   "id": "obrero-ted",
+   "x": 12,
+   "y": 12,
+   "sprite": "worker",
+   "facing": "right",
+   "dialog": [],
+   "trainer": {
+    "name": "Ted",
+    "className": "Obrero",
+    "money": 200,
+    "sight": 4,
+    "party": [
+     {
+      "species": "Timburr",
+      "level": 8
+     },
+     {
+      "species": "Machop",
+      "level": 8
+     }
+    ],
+    "intro": [
+     "Doce horas cargando vigas y ahora me encuentro contigo.",
+     "¡Necesito desahogarme!"
+    ],
+    "defeat": [
+     "Mejor que la fábrica, desde luego."
+    ],
+    "after": [
+     "Antes trabajaba en la fundición. Hasta que trajeron a los Pokémon."
+    ]
+   }
+  },
+  {
+   "id": "chatarrero-bill",
+   "x": 27,
+   "y": 12,
+   "sprite": "worker",
+   "facing": "left",
+   "dialog": [],
+   "trainer": {
+    "name": "Bill",
+    "className": "Chatarrero",
+    "money": 220,
+    "sight": 4,
+    "party": [
+     {
+      "species": "Klink",
+      "level": 9
+     },
+     {
+      "species": "Magnemite",
+      "level": 8
+     }
+    ],
+    "intro": [
+     "¡Eso que llevas es de metal? ¡Lo quiero!"
+    ],
+    "defeat": [
+     "Solo chatarra... como siempre."
+    ],
+    "after": [
+     "En la escoria se encuentran cosas. Una vez encontré una Poké Ball entera."
+    ]
+   }
+  },
+  {
+   "id": "pilluela-ivy",
+   "x": 33,
+   "y": 9,
+   "sprite": "urchin",
+   "facing": "down",
+   "dialog": [],
+   "trainer": {
+    "name": "Ivy",
+    "className": "Pilluela",
+    "money": 160,
+    "sight": 3,
+    "party": [
+     {
+      "species": "Nickit",
+      "level": 8
+     },
+     {
+      "species": "Rookidee",
+      "level": 9
+     }
+    ],
+    "intro": [
+     "¡Mag dice que eres bueno! ¡Vamos a verlo!"
+    ],
+    "defeat": [
+     "Vale... Mag tenía razón."
+    ],
+    "after": [
+     "Algún día seré jefa de banda. Como Mag."
+    ]
+   }
+  },
+  {
+   "id": "piquete",
+   "x": 42,
+   "y": 9,
+   "sprite": "worker",
+   "facing": "left",
+   "dialog": [
+    "¡Huelga en los Muelles!",
+    "Hasta que Hargreave no pague lo que debe, aquí no pasa nadie.",
+    "(Los Muelles llegarán en una próxima versión.)"
+   ]
+  },
+  {
+   "id": "piquete2",
+   "x": 42,
+   "y": 8,
+   "sprite": "worker",
+   "facing": "left",
+   "dialog": [
+    "¡Ni un barco más sin salario justo!"
+   ]
+  },
+  {
+   "id": "piquete3",
+   "x": 42,
+   "y": 10,
+   "sprite": "urchin",
+   "facing": "left",
+   "dialog": [
+    "Mi padre está ahí dentro. Llevan tres días sin cobrar."
+   ]
+  }
+ ]
+}

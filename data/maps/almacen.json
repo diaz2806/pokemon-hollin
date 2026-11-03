@@ -1,0 +1,155 @@
+{
+ "id": "almacen",
+ "name": "Almacén de Los Gorriones",
+ "indoor": true,
+ "rows": [
+  "##############",
+  "#wwwwwwwwwwww#",
+  "#wXXwwwwwwQQw#",
+  "#wwwwwwwwwwww#",
+  "#wwwXwwwwXwww#",
+  "#wwwXwwwwXwww#",
+  "#wwwwwwwwwwww#",
+  "#wQwwwwwwwwXw#",
+  "#wwwwwwwwwwww#",
+  "######mm######"
+ ],
+ "warps": [
+  {
+   "x": 6,
+   "y": 9,
+   "to": "mercado",
+   "toX": 26,
+   "toY": 5,
+   "facing": "down"
+  },
+  {
+   "x": 7,
+   "y": 9,
+   "to": "mercado",
+   "toX": 27,
+   "toY": 5,
+   "facing": "down"
+  }
+ ],
+ "npcs": [
+  {
+   "id": "gorrion-nell",
+   "x": 2,
+   "y": 6,
+   "sprite": "urchin",
+   "facing": "right",
+   "dialog": [],
+   "trainer": {
+    "name": "Nell",
+    "className": "Gorrión",
+    "money": 140,
+    "sight": 4,
+    "party": [
+     {
+      "species": "Purrloin",
+      "level": 7
+     }
+    ],
+    "intro": [
+     "¡Eh! ¿Quién te ha dejado entrar?",
+     "Te voy a vaciar los bolsillos."
+    ],
+    "defeat": [
+     "Mis bolsillos... vacíos. Qué ironía."
+    ],
+    "after": [
+     "Mag nos enseñó todo lo que sabemos. Bueno, casi todo."
+    ]
+   }
+  },
+  {
+   "id": "gorrion-sid",
+   "x": 11,
+   "y": 3,
+   "sprite": "worker",
+   "facing": "left",
+   "dialog": [],
+   "trainer": {
+    "name": "Sid",
+    "className": "Gorrión",
+    "money": 160,
+    "sight": 5,
+    "party": [
+     {
+      "species": "Lillipup",
+      "level": 7
+     },
+     {
+      "species": "Meowth",
+      "level": 7
+     }
+    ],
+    "intro": [
+     "Nadie llega hasta la jefa sin pasar por mí."
+    ],
+    "defeat": [
+     "Vale... has pasado por mí. Literalmente."
+    ],
+    "after": [
+     "Ve. A ver qué te dice Mag."
+    ]
+   }
+  },
+  {
+   "id": "mag",
+   "x": 6,
+   "y": 1,
+   "sprite": "lady",
+   "facing": "down",
+   "dialog": [],
+   "trainer": {
+    "name": "Mag la Urraca",
+    "className": "Jefa de banda",
+    "money": 800,
+    "sight": 0,
+    "party": [
+     {
+      "species": "Patrat",
+      "level": 8
+     },
+     {
+      "species": "Meowth",
+      "level": 9
+     },
+     {
+      "species": "Herdier",
+      "level": 11
+     }
+    ],
+    "intro": [
+     "Así que tú eres el crío que se escapó de la fábrica de Hargreave.",
+     "Todo el Mercado habla de ti. Y de ese Pokémon que te sigue a todas partes.",
+     "Aquí mandan Los Gorriones. Si quieres moverte por Ashbury, demuéstrame que vales algo."
+    ],
+    "defeat": [
+     "Ja... Tienes las manos rápidas, para ser un crío."
+    ],
+    "after": [
+     "Con esa ficha, los guardias de la salida mirarán hacia otro lado.",
+     "El Camino de la Escoria lleva a los Muelles. Allí mandan los contrabandistas.",
+     "Y ten cuidado: a Hargreave no le gusta perder lo que es suyo."
+    ],
+    "reward": {
+     "flags": [
+      "ficha_mercado"
+     ],
+     "items": {
+      "potion": 2
+     },
+     "text": [
+      "Toma. La Ficha del Mercado.",
+      "Quien la lleva, tiene el respeto de Los Gorriones.",
+      "¡Has conseguido la FICHA DEL MERCADO!",
+      "Mag también te da 2 Pociones."
+     ]
+    }
+   }
+  }
+ ]
+}

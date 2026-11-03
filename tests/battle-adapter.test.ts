@@ -98,6 +98,43 @@ describe('Equipo del jugador', () => {
   });
 });
 
+describe('Combates de entrenador', () => {
+  it('el rival saca su siguiente Pokémon y el combate llega al final', () => {
+    const strong = createMember('Growlithe', 40, ['ember']);
+    const foes: PokemonSpec[] = [
+      { species: 'Patrat', level: 5, moves: ['tackle'] },
+      { species: 'Meowth', level: 5, moves: ['scratch'] },
+      { species: 'Lillipup', level: 5, moves: ['tackle'] },
+    ];
+    const b = new BattleAdapter([strong], foes, { seed, opponentPolicy: alwaysFirstMove });
+    const seen = new Set<string>();
+    for (let turn = 0; turn < 20 && !b.ended; turn++) {
+      seen.add(b.opponent.species);
+      const steps = b.fight(1);
+      for (const s of steps) if (s.kind === 'switch' && s.side === 'p2') seen.add(s.name);
+    }
+    expect(b.winner).toBe('player');
+    expect([...seen].sort()).toEqual(['Lillipup', 'Meowth', 'Patrat']);
+  });
+
+  it('si ambos se debilitan a la vez, primero cambia el jugador y luego el rival', () => {
+    const a = createMember('Pidove', 3, ['tackle']);
+    a.hp = 1;
+    const c = createMember('Growlithe', 30, ['ember']);
+    const foes: PokemonSpec[] = [
+      { species: 'Rattata', level: 20, moves: ['explosion'] },
+      { species: 'Patrat', level: 5, moves: ['tackle'] },
+    ];
+    const b = new BattleAdapter([a, c], foes, { seed, opponentPolicy: alwaysFirstMove });
+    b.fight(1);
+    expect(b.needsSwitch).toBe(true);
+    b.switchTo(1);
+    expect(b.player.species).toBe('Growlithe');
+    expect(b.opponent.species).toBe('Patrat');
+    expect(b.ended).toBe(false);
+  });
+});
+
 describe('Captura y huida', () => {
   it('captura seguro con PS al mínimo y ratio máximo', () => {
     const b = new BattleAdapter([growlithe], [pidove], { seed });

@@ -269,8 +269,60 @@ const draws: Record<Tile, Draw> = {
     for (let x = 1; x < 15; x += 3) p.vline(x, 1, 14, '#6b665d');
     p.hline(1, 1, 14, '#7d776c').hline(1, 14, 14, '#6b665d');
   },
+  dirt: (p) => dirt(p, 41),
+  weeds: (p, frame) => {
+    dirt(p, 43);
+    const rng = seeded(47);
+    // Hierba seca y amarillenta que crece entre la escoria.
+    for (let i = 0; i < 14; i++) {
+      const x = Math.floor(rng() * 15);
+      const y = 4 + Math.floor(rng() * 11);
+      const h = 2 + Math.floor(rng() * 4);
+      const sway = frame === 1 && i % 3 === 0 ? 1 : 0;
+      p.vline(x + sway, y - h, h, rng() < 0.5 ? '#7d7a4a' : '#8f8a52');
+      p.px(x + sway, y - h, '#a9a265');
+    }
+    p.hline(0, 15, T, '#3a352c');
+  },
+  slag: (p) => {
+    dirt(p, 53);
+    p.ellipse(8, 10, 7, 5, '#25221f');
+    p.ellipse(8, 9, 6, 5, '#2f2b27');
+    p.ellipse(6, 7, 3, 2, '#3e3832');
+    p.px(10, 8, '#e07b39').px(4, 11, '#a3402a');
+  },
+  fence: (p) => {
+    dirt(p, 59);
+    p.hline(0, 4, T, C.ironLight).hline(0, 10, T, C.ironLight);
+    for (let x = 1; x < T; x += 4) {
+      p.vline(x, 1, 13, C.iron);
+      p.px(x, 0, C.ironLight);
+    }
+  },
+  rails: (p) => {
+    dirt(p, 61);
+    for (let x = 1; x < T; x += 5) p.rect(x, 3, 3, 10, '#4a3626');
+    p.hline(0, 5, T, '#7a7d85').hline(0, 11, T, '#7a7d85');
+    p.hline(0, 6, T, '#3d3f45').hline(0, 12, T, '#3d3f45');
+  },
+  gangDoor: (p) => {
+    brick(p, 6);
+    p.rect(1, 1, 14, 15, C.frame);
+    p.rect(2, 2, 12, 14, '#4a4744');
+    for (let y = 3; y < 16; y += 3) p.hline(2, y, 12, '#3a3836');
+    p.rect(2, 8, 12, 1, '#2a2826');
+    // Marca de la banda: un pájaro pintado con tiza.
+    p.px(7, 5, '#d9d2c3').px(8, 5, '#d9d2c3').px(6, 6, '#d9d2c3').px(9, 6, '#d9d2c3');
+  },
   void: (p) => p.rect(0, 0, T, T, C.black),
 };
+
+function dirt(p: Painter, seed: number) {
+  p.rect(0, 0, T, T, '#4a443a');
+  const rng = seeded(seed);
+  for (let i = 0; i < 18; i++) p.px(Math.floor(rng() * 16), Math.floor(rng() * 16), rng() < 0.5 ? '#3e392f' : '#57503f');
+  for (let i = 0; i < 3; i++) p.rect(Math.floor(rng() * 14), Math.floor(rng() * 14), 2, 1, '#2f2b25');
+}
 
 function brick(p: Painter, seed: number) {
   p.rect(0, 0, T, T, C.mortar);
@@ -303,7 +355,7 @@ function roof(p: Painter) {
 }
 
 /** Número de fotogramas de animación por tipo de casilla. */
-export const TILE_FRAMES: Partial<Record<Tile, number>> = { water: 2, furnace: 2, window: 2 };
+export const TILE_FRAMES: Partial<Record<Tile, number>> = { water: 2, furnace: 2, window: 2, weeds: 2 };
 
 export function drawTile(p: Painter, tile: Tile, frame = 0): void {
   draws[tile](p, frame);
