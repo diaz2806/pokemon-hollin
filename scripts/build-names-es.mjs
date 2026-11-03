@@ -39,5 +39,5 @@ async function build(entity, table, file, extra = {}) {
 }
 
 // Movimientos propios del mod (no existen en PokeAPI).
-await build('move', 'moves', 'move-names-es.json', { hollinazo: 'Hollinazo', visegrip: 'Agarre' });
+await build('move', 'moves', 'move-names-es.json', { hollinazo: 'Hollinazo', emboscada: 'Emboscada', visegrip: 'Agarre' });
 await build('ability', 'abilities', 'ability-names-es.json');

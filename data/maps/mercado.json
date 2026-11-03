@@ -113,6 +113,20 @@
     "Hargreave dice que sus fábricas dan trabajo a toda Ashbury.",
     "Lo que no dice es cuántos Pokémon se queman en los hornos."
    ]
+  },
+  {
+   "id": "sandile",
+   "x": 7,
+   "y": 23,
+   "sprite": "creature",
+   "species": "Sandile-Ashbury",
+   "facing": "left",
+   "action": "giftSandile",
+   "unlessFlag": "gotSandile",
+   "dialog": [
+    "Entre las cajas hay un Sandile flaco y negro de hollín.",
+    "Te enseña los dientes... pero le ruge la tripa."
+   ]
   }
  ]
 }

@@ -87,7 +87,7 @@ export interface Warp {
   blockedText?: string[];
 }
 
-export type NpcAction = 'heal' | 'cage' | 'giveBalls';
+export type NpcAction = 'heal' | 'cage' | 'giveBalls' | 'giftSandile';
 
 export interface NpcData {
   id: string;
@@ -97,7 +97,7 @@ export interface NpcData {
   facing: Direction;
   dialog: string[];
   action?: NpcAction;
-  /** Para las jaulas: qué Pokémon hay dentro. */
+  /** Para jaulas y Pokémon en el mapa: qué especie es. */
   species?: string;
   /** Solo aparece si el flag está activo / inactivo. */
   ifFlag?: string;

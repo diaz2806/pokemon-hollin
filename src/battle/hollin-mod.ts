@@ -62,6 +62,29 @@ const hollinazo = {
 };
 
 /**
+ * Emboscada: movimiento exclusivo de la cadena de Sandile de Ashbury.
+ * Primero ciegas al rival con humo (Hollinazo) y luego golpeas: si el objetivo
+ * está Tiznado, la potencia se duplica (70 -> 140).
+ */
+const emboscada = {
+  num: -3,
+  name: 'Emboscada',
+  type: 'Dark',
+  category: 'Physical',
+  accuracy: 100,
+  basePower: 70,
+  basePowerCallback(this: Battle, _pokemon: Pokemon, target: Pokemon, move: ActiveMove) {
+    return target.volatiles['tiznado'] ? move.basePower * 2 : move.basePower;
+  },
+  pp: 15,
+  priority: 0,
+  target: 'normal',
+  flags: { contact: 1, protect: 1, mirror: 1 },
+  secondary: null,
+  desc: 'Ataque por sorpresa. Si el objetivo está Tiznado, su potencia se duplica.',
+};
+
+/**
  * Movimiento interno e invisible. Se usa en los turnos en los que el jugador no
  * ataca (lanzar una Poké Ball, intentar huir, usar un objeto) para que el rival
  * sí actúe. Prioridad máxima y onTry -> null: no hace nada ni escribe en el log.
@@ -92,7 +115,7 @@ export function getHollinDex(): ModdedDex {
   if (!cached) {
     cached = Dex.mod('hollin', {
       Conditions: { tiznado },
-      Moves: { hollinazo, hollinaccion },
+      Moves: { hollinazo, emboscada, hollinaccion },
       // Formas regionales de Ashbury.
       Pokedex: { ...SANDILE_ASHBURY_SPECIES },
       Learnsets: { ...SANDILE_ASHBURY_LEARNSETS },

@@ -20,6 +20,8 @@ Ya se puede jugar el arranque de la historia:
 - **Combates estilo DS** con las reglas oficiales (motor de Pokémon Showdown): luchar, mochila, cambiar, huir.
 - **Captura** con Poké Balls, equipo de 6, experiencia, subidas de nivel, movimientos nuevos y evolución.
 - **Estado propio Tiznado** (movimiento Hollinazo): el humo hace fallar ataques y oculta la vida del rival.
+- **Pokémon emblema: Sandile de Ashbury** (Veneno/Siniestro) y su cadena evolutiva, con su movimiento exclusivo **Emboscada** (doble de potencia contra rivales tiznados). Hay uno hambriento escondido en los callejones del Mercado.
+- **Todas las generaciones**: las 1025 especies y todos los movimientos funcionan, con sus nombres oficiales en español.
 - **Guardado** en el navegador y **controles táctiles** en el móvil.
 
 El arte de la ciudad y los personajes es pixel art original generado por código. Los Pokémon

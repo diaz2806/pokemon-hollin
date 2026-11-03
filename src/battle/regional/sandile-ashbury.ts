@@ -1,5 +1,5 @@
 /**
- * Formas regionales de Ashbury: cadena de Sandile.
+ * Formas regionales de Ashbury: cadena de Sandile. POKÉMON EMBLEMA del juego.
  *
  * En Ashbury no hay desiertos: los Sandile viven en los canales y las
  * alcantarillas, entre aceite, hollín y desechos de las fábricas. Se han vuelto
@@ -17,7 +17,8 @@ const LEVEL_UP: Record<string, number[]> = {
   smog: [3],
   honeclaws: [6],
   poisonfang: [9],
-  scaryface: [12],
+  scaryface: [1],
+  emboscada: [12],
   bite: [15],
   hollinazo: [18],
   sludge: [21],

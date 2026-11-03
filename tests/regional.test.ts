@@ -6,6 +6,7 @@ import { speciesLabel } from '../src/core/party';
 import { getHollinDex } from '../src/battle/hollin-mod';
 import mercadoTable from '../data/encounters/mercado-callejones.json';
 import moveNamesEs from '../data/move-names-es.json';
+import mercadoMap from '../data/maps/mercado.json';
 
 describe('Sandile de Ashbury', () => {
   it('existe con tipo Veneno/Siniestro y evoluciona a los mismos niveles', () => {
@@ -41,6 +42,37 @@ describe('Sandile de Ashbury', () => {
     const m = createMember('Sandile-Ashbury', 5);
     const b = new BattleAdapter([m], [{ species: 'Pidove', level: 3, moves: ['growl'] }], { seed: [1, 2, 3, 4], opponentPolicy: () => 1 });
     expect(stepsToText(b.fight(1))[0]).toMatch(/^¡Sandile usó /);
+  });
+});
+
+describe('Pokémon emblema', () => {
+  const dmgTo = (tiznado: boolean) => {
+    const b = new BattleAdapter(
+      [{ species: 'Krookodile-Ashbury', level: 50, moves: ['emboscada', 'hollinazo'] }],
+      [{ species: 'Snorlax', level: 50, moves: ['splash'] }],
+      { seed: [7, 7, 7, 7], opponentPolicy: () => 1 },
+    );
+    if (tiznado) b.fight(2);
+    const before = b.opponent.hp;
+    b.fight(1);
+    return before - b.opponent.hp;
+  };
+
+  it('Emboscada pega el doble si el rival está Tiznado', () => {
+    const normal = dmgTo(false);
+    const smoked = dmgTo(true);
+    expect(smoked).toBeGreaterThan(normal * 1.6);
+  });
+
+  it('Sandile de Ashbury aprende Emboscada al nivel 12', () => {
+    expect(defaultMoves('Sandile-Ashbury', 12)).toContain('emboscada');
+    expect(moveName('emboscada')).toBe('Emboscada');
+  });
+
+  it('hay un Sandile esperando en los callejones del Mercado', () => {
+    const npc = (mercadoMap as { npcs: { id: string; action?: string; species?: string }[] }).npcs.find((n) => n.id === 'sandile');
+    expect(npc?.action).toBe('giftSandile');
+    expect(npc?.species).toBe('Sandile-Ashbury');
   });
 });
 

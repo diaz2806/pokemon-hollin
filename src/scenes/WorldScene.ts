@@ -10,7 +10,7 @@ import { step, type Direction, type Point } from '../core/grid';
 import { Follower } from '../core/follower';
 import { TileMap, canWalk, interactionAt, opposite, visibleNpcs, type NpcData } from '../core/tilemap';
 import { rollEncounter } from '../core/encounters';
-import { anyAble, displayName, firstAbleIndex } from '../core/party';
+import { addCaught, anyAble, displayName, firstAbleIndex } from '../core/party';
 import { markCaught, markSeen } from '../core/game-state';
 import { createMember, healMember, speciesTypes } from '../battle/dex-service';
 import { MAPS, ENCOUNTER_TABLES, STARTERS } from '../game/content';
@@ -161,7 +161,7 @@ export class WorldScene extends Phaser.Scene {
     this.npcs = visibleNpcs(this.map.data, this.state.flags);
     for (const npc of this.npcs) {
       let sprite: Phaser.GameObjects.Sprite;
-      if (npc.sprite === 'cage' && npc.species) {
+      if ((npc.sprite === 'cage' || npc.sprite === 'creature') && npc.species) {
         sprite = this.creatureSprite(npc.species, 'down');
         sprite.setPosition(npc.x * T + 8, npc.y * T + 14).setDepth(npc.y * 10 + 6);
       } else {
@@ -366,7 +366,7 @@ export class WorldScene extends Phaser.Scene {
 
   private async talkTo(npc: NpcData): Promise<void> {
     const sprite = this.npcSprites.get(npc.id);
-    if (sprite && npc.sprite !== 'cage') sprite.setFrame(ROW[opposite(this.state.facing)] * 3);
+    if (sprite && npc.sprite !== 'cage' && npc.sprite !== 'creature') sprite.setFrame(ROW[opposite(this.state.facing)] * 3);
     switch (npc.action) {
       case 'heal':
         return this.healAtPub(npc);
@@ -374,6 +374,8 @@ export class WorldScene extends Phaser.Scene {
         return this.openCage(npc);
       case 'giveBalls':
         return this.giveBalls(npc);
+      case 'giftSandile':
+        return this.giftSandile(npc);
       default:
         await this.textbox.say(npc.dialog);
     }
@@ -439,6 +441,31 @@ export class WorldScene extends Phaser.Scene {
     this.state.bag.pokeball += 5;
     this.state.flags.gotBalls = true;
     await this.textbox.say('¡Has recibido 5 Poké Balls!');
+  }
+
+  /** Evento del Pokémon emblema: un Sandile de Ashbury hambriento en los callejones. */
+  private async giftSandile(npc: NpcData): Promise<void> {
+    await this.textbox.say(npc.dialog, { keepOpen: true });
+    const choice = await this.textbox.ask('¿Compartes tu pan con él?', ['SÍ', 'NO']);
+    if (choice !== 0) {
+      await this.textbox.say('Sandile se esconde otra vez entre las cajas, gruñendo.');
+      return;
+    }
+    const sprite = this.npcSprites.get(npc.id);
+    await this.textbox.say(['Sandile se traga el pan de un bocado.', 'Te mira un buen rato sin parpadear...'], { keepOpen: true });
+    if (sprite) await new Promise<void>((r) => this.tweens.add({ targets: sprite, y: sprite.y - 4, duration: 120, yoyo: true, repeat: 1, onComplete: () => r() }));
+    const member = createMember('Sandile-Ashbury', 6);
+    const where = addCaught(this.state.party, this.state.box, member);
+    markCaught(this.state, 'Sandile-Ashbury');
+    this.state.flags.gotSandile = true;
+    this.npcs = this.npcs.filter((n) => n.id !== npc.id);
+    sprite?.destroy();
+    this.npcSprites.delete(npc.id);
+    this.setupFollower(false);
+    await this.textbox.say([
+      '...y se pone a tu lado como si siempre hubiera sido así.',
+      where === 'party' ? '¡Sandile se ha unido a tu equipo!' : 'Tu equipo está lleno: Sandile se ha ido a la caja del PC.',
+    ]);
   }
 
   private async runOnEnter(): Promise<void> {
