@@ -71,18 +71,3 @@ describe('StepTranslator', () => {
   });
 });
 
-describe('Humo en el log', () => {
-  const t = new StepTranslator('salvaje', (en) => en);
-
-  it('traduce los cambios de densidad de humo', () => {
-    expect(t.translate('|-humo|3|up')).toEqual([
-      { kind: 'smoke', level: 3 },
-      { kind: 'text', text: '¡Hollín negro! Ya no se ve nada...' },
-    ]);
-    expect(t.translate('|-humo|0|down')[1]).toEqual({ kind: 'text', text: '¡El viento se lleva el humo!' });
-  });
-
-  it('el nivel inicial de la zona no lleva texto', () => {
-    expect(t.translate('|-humo|2|zone')).toEqual([{ kind: 'smoke', level: 2 }]);
-  });
-});

@@ -1,7 +1,7 @@
 {
  "id": "pub",
  "name": "El Gallo Negro",
- "smoke": 0,
+ "haze": 0,
  "battleback": "indoor2",
  "indoor": true,
  "rows": [

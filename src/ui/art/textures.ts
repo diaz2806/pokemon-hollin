@@ -4,6 +4,8 @@
  */
 import * as Phaser from 'phaser';
 import { ALL_TILES, drawProp, drawTile, T, TILE_FRAMES } from './tiles';
+import { ALL_DECOR, drawDecor } from './decor';
+import { DECOR_FRAMES } from '../../core/decor';
 import { CHARACTER_FRAMES, CHARACTER_PALETTES, WALK_FRAMES, type Facing } from './characters';
 import { Painter, mix, seeded } from './painter';
 
@@ -42,6 +44,20 @@ function canvasTexture(scene: Phaser.Scene, key: string, w: number, h: number, d
 
 export function tileKey(tile: string, frame = 0): string {
   return `tile-${tile}-${frame}`;
+}
+
+/** Detalle de mapa (charco, cartel, paloma...): ver core/decor. */
+export function decorKey(kind: string, variant: number, frame = 0): string {
+  return `decor-${kind}-${variant}-${frame}`;
+}
+
+function generateDecor(scene: Phaser.Scene): void {
+  for (const kind of ALL_DECOR) {
+    const frames = DECOR_FRAMES[kind] ?? 1;
+    for (let v = 0; v < 4; v++) {
+      for (let f = 0; f < frames; f++) canvasTexture(scene, decorKey(kind, v, f), T, T, (p) => drawDecor(p, kind, v, f));
+    }
+  }
 }
 
 /** El mismo dibujo sin suelo, para ponerlo encima de una casilla de tileset. */
@@ -218,6 +234,7 @@ function generateTiles(scene: Phaser.Scene): void {
 
 export function generateAllTextures(scene: Phaser.Scene): void {
   generateTiles(scene);
+  generateDecor(scene);
   generateCharacters(scene);
   generateFollowers(scene);
   generateBattlers(scene);

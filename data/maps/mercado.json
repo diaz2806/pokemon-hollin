@@ -1,7 +1,7 @@
 {
  "id": "mercado",
  "name": "El Mercado",
- "smoke": 1,
+ "haze": 1,
  "battleback": "city_night",
  "encounterTable": "mercado-callejones",
  "rows": [

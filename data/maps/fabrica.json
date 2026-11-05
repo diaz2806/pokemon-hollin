@@ -1,7 +1,7 @@
 {
  "id": "fabrica",
  "name": "Fábrica Hargreave",
- "smoke": 3,
+ "haze": 3,
  "battleback": "indoor3",
  "indoor": true,
  "rows": [

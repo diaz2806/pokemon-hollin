@@ -92,8 +92,7 @@ export function battleResources(back: string): ResRequest[] {
     { cat: 'ui/battle', name: 'ball_pokeball', frame: [16, 32] },
     { cat: 'ui/battle', name: 'ball_pokeball_open' },
     { cat: 'ui/battle', name: 'ballburst_particle' },
-    { cat: 'fogs', name: 'fog_tile' },
-    { cat: 'fogs', name: 'fog_tile_2' },
+    { cat: 'ui', name: 'category', sheet: [1, 3] },
   ];
 }
 

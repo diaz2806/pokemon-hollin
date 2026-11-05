@@ -156,8 +156,8 @@ export interface MapData {
   lockedDoorText?: string[];
   /** Diálogo automático la primera vez que se entra (se marca `flag`). */
   onEnter?: { flag: string; text: string[] };
-  /** Densidad de humo con la que empiezan los combates aquí (0-3). */
-  smoke?: number;
+  /** Bruma de ambiente en el mapa (0-3): solo visual. */
+  haze?: number;
   /** Fondo de combate de Essentials para esta zona. */
   battleback?: string;
 }

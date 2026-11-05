@@ -68,9 +68,17 @@ export function moveName(id: string): string {
   return MOVE_NAMES_ES[toId(id)] ?? dex().moves.get(id).name;
 }
 
-export function moveInfo(id: string): { name: string; type: string; pp: number; category: string; power: number; target: string } {
+export function moveInfo(id: string): {
+  name: string;
+  type: string;
+  pp: number;
+  category: string;
+  power: number;
+  target: string;
+  accuracy: number | true;
+} {
   const m = dex().moves.get(id);
-  return { name: moveName(m.id), type: m.type, pp: m.pp, category: m.category, power: m.basePower, target: m.target };
+  return { name: moveName(m.id), type: m.type, pp: m.pp, category: m.category, power: m.basePower, target: m.target, accuracy: m.accuracy };
 }
 
 /**

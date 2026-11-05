@@ -11,10 +11,10 @@ import { expGain, levelProgress } from '../core/experience';
 import { addCaught, displayName, speciesLabel, type PartyMember } from '../core/party';
 import { markCaught } from '../core/game-state';
 import { session } from '../game/session';
-import { Menu, TextBox, makeFrame, textStyle } from '../ui/TextBox';
-import { BATTLE_BACK, STATUS_LABEL, TYPE_COLOR, TYPE_ROW, TYPE_SHORT_ES, labelStyle, battleResources, battlebackParts, chooseButtons, essentialsBattleUi } from '../ui/battle-ui';
-import { SmokeLayer, animationFor, ballSendOut, playSheet } from '../ui/battle-fx';
-import { SMOKE_NATIVE_TYPES } from '../battle/hollin-mod';
+import { Menu, TextBox, textStyle } from '../ui/TextBox';
+import { BATTLE_BACK, STATUS_LABEL, TYPE_ROW, labelStyle, battleResources, battlebackParts, chooseButtons, essentialsBattleUi } from '../ui/battle-ui';
+import { animationFor, ballSendOut, battleAmbience, groundShadow, playSheet } from '../ui/battle-fx';
+import { chooseMove } from '../ui/move-menu';
 import { queueRes, resKey, resReady } from '../ui/resources';
 import { playBgm, playCry, playMe, playSe, stopBgm } from '../ui/audio';
 import { speciesBaseId } from '../battle/dex-service';
@@ -25,8 +25,6 @@ import type { PartySceneData } from './PartyScene';
 
 export interface BattleSceneData {
   kind: 'wild' | 'trainer';
-  /** Densidad de humo de la zona (0-3); ver `humo` en hollin-mod. */
-  smoke?: number;
   /** Fondo de combate de Essentials (p. ej. 'city_night', 'rocky_night', 'indoor1'). */
   back?: string;
   foes: { species: string; level: number; moves?: string[] }[];
@@ -47,22 +45,17 @@ export interface BattleResult {
   caughtNew?: string;
 }
 
-const TYPE_ES: Record<string, string> = {
-  Normal: 'NORMAL', Fire: 'FUEGO', Water: 'AGUA', Grass: 'PLANTA', Electric: 'ELÉCTR.', Ice: 'HIELO', Fighting: 'LUCHA',
-  Poison: 'VENENO', Ground: 'TIERRA', Flying: 'VOLADOR', Psychic: 'PSÍQUICO', Bug: 'BICHO', Rock: 'ROCA', Ghost: 'FANTASMA',
-  Dragon: 'DRAGÓN', Dark: 'SINIESTRO', Steel: 'ACERO', Fairy: 'HADA',
-};
 
 const STATUS_ES: Record<string, string> = { brn: 'QUE', par: 'PAR', psn: 'ENV', tox: 'ENV', slp: 'DOR', frz: 'CON' };
 
-/** Texto al empezar según la densidad de humo de la zona. */
-const ZONE_SMOKE_TEXT = ['', 'Una neblina de hollín cubre el lugar.', 'El humo es espeso: cuesta ver al rival.', '¡Hollín negro! El aire quema y no se ve nada.'];
-
+/** Etiqueta de eficacia para las tarjetas de ataque. Neutro: sin etiqueta. */
 function effectLabel(mult: number): [string, string] {
-  if (mult === 0) return ['NO AFECTA', '#8a8478'];
-  if (mult >= 2) return ['EFICAZ', '#f2c14e'];
-  if (mult < 1) return ['POCO EFICAZ', '#a9a29a'];
-  return ['NORMAL', '#d9d2c3'];
+  if (mult === 0) return ['x0', '#c05040'];
+  if (mult >= 4) return ['x4', '#ffd860'];
+  if (mult >= 2) return ['x2', '#f2c14e'];
+  if (mult === 0.25) return ['x.25', '#a9a29a'];
+  if (mult < 1) return ['x.5', '#a9a29a'];
+  return ['', ''];
 }
 
 const FOE_POS = { x: 190, y: 86 };
@@ -113,9 +106,10 @@ export class BattleScene extends Phaser.Scene {
   /** Último mensaje de eficacia, para el sonido del golpe. */
   private lastCommand = 0;
   private lastMove = 0;
-  private smoke!: SmokeLayer;
   /** Respiración en reposo: los sprites suben y bajan 1 px (desactivado durante animaciones). */
   private idle = { p1: false, p2: false };
+  private foeShadow?: Phaser.GameObjects.Ellipse;
+  private playerShadow?: Phaser.GameObjects.Ellipse;
   private idleClock = 0;
   private idleUp = false;
 
@@ -133,6 +127,7 @@ export class BattleScene extends Phaser.Scene {
       ...data.foes.map((f) => ['front', f.species] as ['front', string]),
       ...session.state.party.map((m) => ['back', m.species] as ['back', string]),
       ...session.state.party.map((m) => ['front', m.species] as ['front', string]),
+      ...session.state.party.map((m) => ['icons', m.species] as ['icons', string]),
     ]);
   }
 
@@ -145,7 +140,6 @@ export class BattleScene extends Phaser.Scene {
     this.foeFainted = false;
     this.adapter = new BattleAdapter(this.party, this.foeSpecs, {
       foeLabel: data.kind === 'wild' ? 'salvaje' : 'rival',
-      smoke: data.smoke ?? 0,
     });
     this.idle = { p1: false, p2: false };
 
@@ -161,14 +155,15 @@ export class BattleScene extends Phaser.Scene {
     } else {
       this.add.image(0, 0, 'bg-alley').setOrigin(0);
     }
+    // Sombras bajo los Pokémon (siguen a su sprite en update()).
+    this.foeShadow = groundShadow(this, this.foePos.x, this.foePos.y - 2, 64, true).setAlpha(0);
+    this.playerShadow = groundShadow(this, this.playerPos.x, this.playerPos.y - 3, 80, false).setAlpha(0);
     this.foeSprite = this.add.image(this.foePos.x, this.foePos.y, this.battlerTexture(this.adapter.opponent.species, false));
     this.playerSprite = this.add.image(this.playerPos.x, this.playerPos.y, this.battlerTexture(this.adapter.player.species, true));
     this.seat(this.foeSprite);
     this.seat(this.playerSprite);
-    this.smoke = new SmokeLayer(this, GAME_W, this.ess ? 144 : 192);
-    this.smoke.setLevel(this.adapter.smoke, false);
-    this.smoke.setVisible(false);
     if (this.ess) this.add.image(0, 144, resKey('battlebacks', parts.message)).setOrigin(0).setDepth(900);
+    battleAmbience(this, back, this.ess ? 144 : 192);
     this.foeBox = this.databox(false);
     this.playerBox = this.databox(true);
     this.textbox = this.ess ? new TextBox(this, 2, 142, 252, 48, false) : new TextBox(this);
@@ -178,7 +173,15 @@ export class BattleScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number): void {
-    this.smoke?.update(delta);
+    for (const [shadow, sprite] of [
+      [this.foeShadow, this.foeSprite],
+      [this.playerShadow, this.playerSprite],
+    ] as const) {
+      if (!shadow || !sprite) continue;
+      shadow.x = sprite.x;
+      shadow.setAlpha(sprite.visible ? sprite.alpha * Math.min(1, sprite.scaleX) : 0);
+      shadow.scaleX = Math.max(24, sprite.displayWidth * 0.75) / shadow.width;
+    }
     this.idleClock += delta;
     if (this.idleClock < 450) return;
     this.idleClock = 0;
@@ -221,11 +224,6 @@ export class BattleScene extends Phaser.Scene {
     await this.throwOut();
     this.refreshBox(this.playerBox, true);
     this.playerBox.container.setVisible(true);
-    this.smoke.setVisible(true);
-    if (this.adapter.smoke > 0) {
-      this.smoke.setLevel(this.adapter.smoke);
-      await this.say(ZONE_SMOKE_TEXT[this.adapter.smoke]);
-    }
     this.refreshTiznado();
 
     while (!this.adapter.ended) {
@@ -285,9 +283,40 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private async fightMenu(): Promise<boolean> {
-    const choice = this.ess ? await this.essentialsMoves() : await this.classicMoves();
+    const moves = this.adapter.moves;
+    const p = this.adapter.player;
+    const foeTypes = speciesTypes(this.adapter.opponent.species);
+    const infos = moves.map((m) => moveInfo(m.id));
+    this.textbox.hide();
+    this.playerBox.container.setVisible(false);
+    const choice = await chooseMove(this, {
+      moves: moves.map((m, i) => ({
+        name: m.name,
+        type: m.type,
+        pp: m.pp,
+        maxPp: m.maxPp,
+        category: infos[i].category,
+        power: infos[i].power,
+        accuracy: infos[i].accuracy,
+      })),
+      pokemon: {
+        name: p.name,
+        level: p.level,
+        hp: p.hp,
+        maxHp: p.maxHp,
+        iconKey: hasTexture(this, 'icons', p.species) ? assetKey('icons', p.species) : undefined,
+      },
+      hint: (i) => {
+        if (infos[i].category === 'Status') return ['', ''];
+        if (p.tiznado) return ['?', '#a9a29a'];
+        return effectLabel(typeMultiplier(moves[i].type, foeTypes));
+      },
+      start: Math.min(this.lastMove, moves.length - 1),
+    });
+    this.playerBox.container.setVisible(true);
+    this.textbox.show();
     if (choice < 0) return false;
-    const move = this.adapter.moves[choice];
+    const move = moves[choice];
     if (move.pp <= 0) {
       await this.say('¡No quedan PP para este movimiento!');
       return false;
@@ -295,77 +324,6 @@ export class BattleScene extends Phaser.Scene {
     this.lastMove = choice;
     await this.play(this.adapter.fight(move.slot));
     return false;
-  }
-
-  /** Botones coloreados por tipo + panel de PP e icono de tipo (Essentials). */
-  private async essentialsMoves(): Promise<number> {
-    const moves = this.adapter.moves;
-    this.textbox.hide();
-    const panel = this.add.image(0, 144, resKey('ui/battle', 'overlay_fight')).setOrigin(0).setDepth(1150);
-    // Etiqueta de tipo en español (los iconos de Essentials traen el texto en inglés).
-    const typeIcon = this.add.text(224, 151, '', labelStyle('#000000')).setOrigin(0.5, 0).setScale(0.75).setDepth(1151);
-    const ppLabel = this.add.text(200, 167, 'PP', textStyle()).setDepth(1151);
-    const ppText = this.add.text(250, 179, '', textStyle()).setOrigin(1, 0).setDepth(1151);
-    // Pista de eficacia sobre el panel (oculta si el humo no te deja ver al rival).
-    const hintBg = this.add.rectangle(194, 132, 60, 11, 0x1a1816, 0.85).setOrigin(0).setStrokeStyle(1, 0x5c5850).setDepth(1151);
-    const hint = this.add.text(224, 134, '', textStyle('#d9d2c3')).setOrigin(0.5, 0).setScale(0.75).setDepth(1152);
-    const foeTypes = speciesTypes(this.adapter.opponent.species);
-    const show = (i: number) => {
-      const m = moves[i];
-      if (!m) return;
-      typeIcon.setText(TYPE_SHORT_ES[m.type] ?? m.type).setBackgroundColor(TYPE_COLOR[m.type] ?? '#68a090');
-      const info = moveInfo(m.id);
-      const [label, color] =
-        info.category === 'Status' ? ['ESTADO', '#d9d2c3'] : this.foeHidden() ? ['¿? HUMO', '#8a8478'] : effectLabel(typeMultiplier(m.type, foeTypes));
-      hint.setText(label).setColor(color);
-      ppText.setText(`${m.pp}/${m.maxPp}`);
-      ppText.setColor(m.pp === 0 ? '#c03028' : m.pp <= m.maxPp / 4 ? '#e08030' : '#303030');
-    };
-    const slots = [
-      { x: 4, y: 146, w: 93 },
-      { x: 98, y: 146, w: 93 },
-      { x: 4, y: 168, w: 93 },
-      { x: 98, y: 168, w: 93 },
-    ];
-    const choice = await chooseButtons(
-      this,
-      moves.map((m) => ({ label: m.name.slice(0, 11), row: TYPE_ROW[m.type] ?? 0 })),
-      slots,
-      show,
-      Math.min(this.lastMove, moves.length - 1),
-    );
-    panel.destroy();
-    typeIcon.destroy();
-    hint.destroy();
-    hintBg.destroy();
-    ppLabel.destroy();
-    ppText.destroy();
-    this.textbox.show();
-    return choice;
-  }
-
-  private async classicMoves(): Promise<number> {
-    const moves = this.adapter.moves;
-    const info = this.add.container(0, 0).setDepth(1150);
-    const infoBg = this.add.graphics();
-    const frame = makeFrame(this, 150, 110, 104, 32);
-    const infoText = this.add.text(160, 120, '', textStyle());
-    info.add([infoBg, frame, infoText]);
-    const showInfo = (i: number) => {
-      const m = moves[i];
-      if (m) infoText.setText(`PP ${m.pp}/${m.maxPp}\n${TYPE_ES[m.type] ?? m.type}`);
-    };
-    const menu = new Menu(
-      this,
-      moves.map((m) => m.name.toUpperCase().slice(0, 12)),
-      { x: 2, y: 142, width: 252, columns: 2 },
-      showInfo,
-    );
-    showInfo(0);
-    const choice = await menu.choose(-1);
-    menu.destroy();
-    info.destroy();
-    return choice;
   }
 
   private async bagMenu(): Promise<boolean> {
@@ -493,10 +451,6 @@ export class BattleScene extends Phaser.Scene {
           break;
         case 'move':
           await this.moveAnimation(s.side, s.move);
-          break;
-        case 'smoke':
-          this.smoke.setLevel(s.level);
-          if (s.level === 3) this.cameras.main.shake(250, 0.006);
           break;
         case 'hp': {
           const box = s.side === 'p1' ? this.playerBox : this.foeBox;
@@ -877,26 +831,9 @@ export class BattleScene extends Phaser.Scene {
     this.playerBox.smoke.setText(playerBlind ? 'HUMO' : '');
     this.foeBox.smoke.setText(this.adapter.opponent.tiznado ? 'HUMO' : '');
     if (this.foeBox.smoke.text) this.foeBox.status.setText('').setVisible(false);
-    // Si TU Pokémon está tiznado, no distingues bien al rival. Con humo denso, tampoco,
-    // salvo que tu Pokémon sea de los que ven entre el humo (Fuego, Veneno, Siniestro).
-    const hidden = this.foeHidden();
-    if (!this.foeFainted) {
-      this.foeSprite.setAlpha(playerBlind ? 0.35 : 1);
-      const level = this.adapter.smoke;
-      if (level >= 2 && !this.playerSeesInSmoke()) this.foeSprite.setTint(level === 3 ? 0x3a3a44 : 0x7a7a84);
-      else this.foeSprite.clearTint();
-    }
-    this.foeBox.barObject.setAlpha(hidden ? 0.12 : 1);
-  }
-
-  private playerSeesInSmoke(): boolean {
-    return speciesTypes(this.adapter.player.species).some((t) => SMOKE_NATIVE_TYPES.includes(t));
-  }
-
-  /** ¿No ves bien al rival? (tu Pokémon tiznado, o humo denso y no es "del humo"). */
-  private foeHidden(): boolean {
-    if (this.adapter.player.tiznado) return true;
-    return this.adapter.smoke >= 2 && !this.playerSeesInSmoke();
+    // Si TU Pokémon está tiznado, no distingues bien al rival.
+    if (!this.foeFainted) this.foeSprite.setAlpha(playerBlind ? 0.35 : 1);
+    this.foeBox.barObject.setAlpha(playerBlind ? 0.15 : 1);
   }
 
   private async animateHp(box: Databox, hp: number, max: number): Promise<void> {

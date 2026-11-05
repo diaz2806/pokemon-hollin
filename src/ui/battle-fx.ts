@@ -3,14 +3,12 @@
  * - Animaciones de ataque con las hojas de Essentials (assets/animations), una por tipo
  *   y categoría, más algunas propias (Hollinazo, Emboscada).
  * - Salida con Poké Ball: lanzamiento en arco, apertura y destello.
- * - La capa de humo y su medidor (la densidad de humo del mod de Showdown).
  *
  * Todo es opcional: si faltan los gráficos, cada función hace una versión sencilla
  * (destellos y sacudidas) para que el combate nunca se rompa.
  */
 import * as Phaser from 'phaser';
 import { ensureRes, resKey, resReady } from './resources';
-import { textStyle } from './TextBox';
 
 /** Celdas de 96 px (las hojas de Essentials a mitad de tamaño). */
 const CELL = 96;
@@ -211,98 +209,117 @@ export async function ballSendOut(
   glow.destroy();
 }
 
-// ---------- Humo ----------
+// ---------- Ambiente del combate ----------
 
-/** Opacidad de la niebla para cada nivel de humo. */
-const FOG_ALPHA = [0, 0.3, 0.5, 0.72];
-const LEVEL_NAMES = ['LIMPIO', 'NEBLINA', 'DENSO', 'HOLLÍN'];
-/** Color de los bloques llenos: gris claro, gris y, a tope, brasa. */
-const PIP_COLORS = [0xd9d2c3, 0xd9d2c3, 0xa9a29a, 0xe07b39];
+/** Textura de un punto de 1x1 o 2x2 (motas, copos de hollín). */
+function dotTexture(scene: Phaser.Scene, key: string, size: number, color: string): string {
+  if (scene.textures.exists(key)) return key;
+  const tex = scene.textures.createCanvas(key, size, size)!;
+  const ctx = tex.getContext();
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, size, size);
+  tex.refresh();
+  return key;
+}
+
+/** Halo radial suave para haces de luz y farolas. */
+function haloTexture(scene: Phaser.Scene): string {
+  const key = 'battle-halo';
+  if (scene.textures.exists(key)) return key;
+  const tex = scene.textures.createCanvas(key, 128, 128)!;
+  const ctx = tex.getContext();
+  const g = ctx.createRadialGradient(64, 64, 4, 64, 64, 64);
+  g.addColorStop(0, 'rgba(255,230,170,0.55)');
+  g.addColorStop(0.5, 'rgba(255,200,120,0.18)');
+  g.addColorStop(1, 'rgba(255,200,120,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 128, 128);
+  tex.refresh();
+  return key;
+}
+
+/** Haz de luz inclinado (de una ventana o claraboya). */
+function beamTexture(scene: Phaser.Scene): string {
+  const key = 'battle-beam';
+  if (scene.textures.exists(key)) return key;
+  const tex = scene.textures.createCanvas(key, 90, 150)!;
+  const ctx = tex.getContext();
+  const g = ctx.createLinearGradient(0, 0, 0, 150);
+  g.addColorStop(0, 'rgba(255,240,200,0.32)');
+  g.addColorStop(1, 'rgba(255,240,200,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(20, 0);
+  ctx.lineTo(50, 0);
+  ctx.lineTo(90, 150);
+  ctx.lineTo(30, 150);
+  ctx.closePath();
+  ctx.fill();
+  tex.refresh();
+  return key;
+}
 
 /**
- * Niebla de humo sobre el campo de batalla (dos capas que se mueven a distinta
- * velocidad) y un medidor de densidad arriba a la derecha.
+ * Ambiente del combate según el fondo: copos de hollín que caen, brasas que suben
+ * y halo de farola en la calle; haces de luz con motas de polvo en interiores.
+ * Devuelve los objetos creados por si la escena quiere limpiarlos.
  */
-export class SmokeLayer {
-  private readonly layers: Phaser.GameObjects.TileSprite[] = [];
-  private readonly pips: Phaser.GameObjects.Rectangle[] = [];
-  private readonly label: Phaser.GameObjects.Text;
-  private readonly gauge: Phaser.GameObjects.Container;
-  level = 0;
-
-  constructor(
-    private readonly scene: Phaser.Scene,
-    width: number,
-    height: number,
-  ) {
-    const keys = ['fog_tile', 'fog_tile_2'].filter((k) => resReady(scene, 'fogs', k)).map((k) => resKey('fogs', k));
-    if (keys.length === 0) keys.push(this.fallbackTexture());
-    keys.forEach((key, i) => {
-      const layer = scene.add
-        .tileSprite(0, 0, width, height, key)
-        .setOrigin(0)
-        .setDepth(300 + i)
-        .setAlpha(0)
-        .setTint(i === 0 ? 0x9a948c : 0x5a5650);
-      layer.setTileScale(i === 0 ? 1 : 1.5);
-      this.layers.push(layer);
-    });
-
-    // Medidor: chimenea + tres bloques de humo.
-    const bg = scene.add.rectangle(0, 0, 66, 12, 0x1a1816, 0.75).setOrigin(0).setStrokeStyle(1, 0x5c5850);
-    const icon = scene.add.text(3, 2, 'HUMO', textStyle('#d9d2c3')).setScale(0.75);
-    const parts: Phaser.GameObjects.GameObject[] = [bg, icon];
-    for (let i = 0; i < 3; i++) {
-      const pip = scene.add.rectangle(36 + i * 9, 3, 7, 6, 0x3a3633).setOrigin(0).setStrokeStyle(1, 0x0e0d0c);
-      this.pips.push(pip);
-      parts.push(pip);
+export function battleAmbience(scene: Phaser.Scene, back: string, fieldH: number): Phaser.GameObjects.GameObject[] {
+  const objs: Phaser.GameObjects.GameObject[] = [];
+  const indoor = back.startsWith('indoor');
+  const depth = 350;
+  if (indoor) {
+    for (const [x, delay] of [
+      [36, 0],
+      [150, 1400],
+    ]) {
+      const beam = scene.add.image(x, 0, beamTexture(scene)).setOrigin(0).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth).setAlpha(0.8);
+      scene.tweens.add({ targets: beam, alpha: 0.45, duration: 2600, yoyo: true, repeat: -1, delay, ease: 'Sine.InOut' });
+      objs.push(beam);
     }
-    this.label = scene.add.text(66, 13, '', textStyle('#d9d2c3')).setOrigin(1, 0).setScale(0.75).setShadow(1, 1, '#000000', 0, false, true);
-    parts.push(this.label);
-    this.gauge = scene.add.container(width - 70, 3, parts).setDepth(950);
-  }
-
-  /** Textura de reserva: manchas grises difuminadas generadas por código. */
-  private fallbackTexture(): string {
-    const key = 'smoke-fallback';
-    if (this.scene.textures.exists(key)) return key;
-    const tex = this.scene.textures.createCanvas(key, 64, 64)!;
-    const ctx = tex.getContext();
-    for (let i = 0; i < 9; i++) {
-      const x = (i * 23) % 64;
-      const y = (i * 37) % 64;
-      const g = ctx.createRadialGradient(x, y, 2, x, y, 18);
-      g.addColorStop(0, 'rgba(200,200,200,0.55)');
-      g.addColorStop(1, 'rgba(200,200,200,0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, 64, 64);
-    }
-    tex.refresh();
-    return key;
-  }
-
-  setLevel(level: number, animate = true): void {
-    this.level = level;
-    this.layers.forEach((layer, i) => {
-      const alpha = FOG_ALPHA[level] * (i === 0 ? 1 : 0.8);
-      if (animate) this.scene.tweens.add({ targets: layer, alpha, duration: 700 });
-      else layer.setAlpha(alpha);
+    const dust = scene.add.particles(0, 0, dotTexture(scene, 'mote-light', 1, '#fff0c8'), {
+      x: { min: 20, max: 236 },
+      y: { min: 10, max: fieldH - 20 },
+      speedX: { min: -3, max: 3 },
+      speedY: { min: -2, max: 3 },
+      lifespan: 5000,
+      frequency: 160,
+      alpha: { start: 0.9, end: 0 },
+      blendMode: Phaser.BlendModes.ADD,
     });
-    this.pips.forEach((pip, i) => pip.setFillStyle(i < level ? PIP_COLORS[level] : 0x2a2724).setStrokeStyle(1, i < level ? 0x0e0d0c : 0x5c5850));
-    this.label.setText(LEVEL_NAMES[level]);
-    if (animate && level > 0) {
-      this.scene.tweens.add({ targets: this.gauge, scale: 1.12, duration: 120, yoyo: true });
-    }
-  }
-
-  update(delta: number): void {
-    this.layers.forEach((layer, i) => {
-      layer.tilePositionX += delta * (i === 0 ? 0.012 : -0.02);
-      layer.tilePositionY += delta * (i === 0 ? 0.004 : 0.006);
+    dust.setDepth(depth + 1);
+    objs.push(dust);
+  } else {
+    const halo = scene.add.image(28, 14, haloTexture(scene)).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth).setScale(1.4);
+    scene.tweens.add({ targets: halo, alpha: 0.75, duration: 1100, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    objs.push(halo);
+    const soot = scene.add.particles(0, -4, dotTexture(scene, 'soot-flake', 2, '#3a3633'), {
+      x: { min: -20, max: 276 },
+      speedY: { min: 6, max: 14 },
+      speedX: { min: 4, max: 12 },
+      lifespan: 12000,
+      frequency: 220,
+      alpha: { start: 0.8, end: 0.2 },
+      rotate: { min: 0, max: 90 },
     });
+    soot.setDepth(depth + 1);
+    const embers = scene.add.particles(0, fieldH + 2, dotTexture(scene, 'ember-dot', 1, '#f2a040'), {
+      x: { min: 0, max: 256 },
+      speedY: { min: -18, max: -8 },
+      speedX: { min: -4, max: 6 },
+      lifespan: 6000,
+      frequency: 600,
+      alpha: { start: 1, end: 0 },
+      blendMode: Phaser.BlendModes.ADD,
+    });
+    embers.setDepth(depth + 1);
+    objs.push(soot, embers);
   }
+  return objs;
+}
 
-  setVisible(v: boolean): void {
-    this.gauge.setVisible(v);
-  }
+/** Sombra elíptica bajo un Pokémon, sobre su plataforma. */
+export function groundShadow(scene: Phaser.Scene, x: number, y: number, width: number, far: boolean): Phaser.GameObjects.Ellipse {
+  return scene.add
+    .ellipse(x, y, Math.max(24, width * (far ? 0.7 : 0.8)), far ? 7 : 10, 0x000000, 0.32);
 }

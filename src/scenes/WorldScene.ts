@@ -19,8 +19,9 @@ import { session } from '../game/session';
 import { controls } from '../ui/input';
 import { TextBox, Menu } from '../ui/TextBox';
 import { T, TILE_FRAMES } from '../ui/art/tiles';
-import { characterKey, followerPlaceholderKey, propKey, tileKey, FACINGS } from '../ui/art/textures';
+import { characterKey, decorKey, followerPlaceholderKey, propKey, tileKey, FACINGS } from '../ui/art/textures';
 import { cellLook } from '../core/tile-skin';
+import { DECOR_FRAMES, decorate } from '../core/decor';
 import { textStyle } from '../ui/TextBox';
 import { resKey, resReady, skinKeys } from '../ui/resources';
 import { playBgm, playMe, playSe } from '../ui/audio';
@@ -181,6 +182,7 @@ export class WorldScene extends Phaser.Scene {
     for (let y = 0; y < this.map.height; y++) {
       for (let x = 0; x < this.map.width; x++) this.drawCell({ x, y });
     }
+    this.drawDecor();
 
     this.spawnNpcs();
     this.placePlayer();
@@ -226,6 +228,20 @@ export class WorldScene extends Phaser.Scene {
     if (look.ground === 'water') add(groundKeys, look.variant, 0xb0b8c0);
     else add([groundKeys[look.variant % groundKeys.length]], 0, tint);
     if (look.prop) add(propKeys);
+  }
+
+  /** Detalles automáticos (charcos, carteles, palomas...), ver core/decor. */
+  private drawDecor(): void {
+    const data = this.map.data;
+    const blocked = [...(data.npcs ?? []), ...(data.warps ?? [])].map((o) => ({ x: o.x, y: o.y }));
+    for (const d of decorate(this.map, blocked)) {
+      const frames = DECOR_FRAMES[d.kind] ?? 1;
+      const keys = Array.from({ length: frames }, (_, f) => decorKey(d.kind, d.variant, f));
+      const image = this.add.image(d.x * T, d.y * T, keys[0]).setOrigin(0);
+      this.mapLayer.add(image);
+      // Cada detalle animado empieza en un fotograma distinto para que no vayan sincronizados.
+      if (frames > 1) this.animated.push({ image, keys, index: (d.x + d.y) % frames });
+    }
   }
 
   private spawnNpcs(): void {
@@ -311,8 +327,8 @@ export class WorldScene extends Phaser.Scene {
   private applyColorGrade(): void {
     if (this.game.renderer.type !== Phaser.WEBGL) return;
     const cam = this.cameras.main;
-    cam.filters.internal.addColorMatrix().colorMatrix.saturate(-0.38);
-    cam.filters.internal.addVignette(0.5, 0.5, 0.82, 0.45);
+    cam.filters.internal.addColorMatrix().colorMatrix.saturate(-0.2);
+    cam.filters.internal.addVignette(0.5, 0.5, 0.9, 0.3);
   }
 
   /** Humo, chispas y luz de gas. */
@@ -321,17 +337,17 @@ export class WorldScene extends Phaser.Scene {
     const w = this.map.width * T;
     const h = this.map.height * T;
     if (outdoor) {
-      const veil = this.add.rectangle(0, 0, w, h, 0x0e0e14, 0.22).setOrigin(0);
+      const veil = this.add.rectangle(0, 0, w, h, 0x0e0e14, 0.1).setOrigin(0);
       this.fxLayer.add(veil);
     }
-    // Niebla de humo que se arrastra por las calles: más densa cuanto más humo tiene la zona.
-    const density = this.map.data.smoke ?? 0;
+    // Bruma que se arrastra por las calles (solo ambiente).
+    const density = this.map.data.haze ?? 0;
     if (density > 0 && resReady(this, 'fogs', 'fog_tile')) {
       const fog = this.add
         .tileSprite(0, 0, w, h, resKey('fogs', 'fog_tile'))
         .setOrigin(0)
         .setTint(0x5a5650)
-        .setAlpha(0.08 + density * 0.07);
+        .setAlpha(0.04 + density * 0.035);
       this.fxLayer.add(fog);
       this.fog = fog;
     } else {
@@ -342,6 +358,20 @@ export class WorldScene extends Phaser.Scene {
       const glow = this.add.image(l.x * T + 8, l.y * T + 4, 'glow').setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.9);
       this.fxLayer.add(glow);
       this.tweens.add({ targets: glow, alpha: 0.65, duration: 900 + Math.random() * 600, yoyo: true, repeat: -1 });
+    }
+    // Polillas revoloteando alrededor de las farolas de gas.
+    for (const l of this.map.positionsOf('lamp')) {
+      const moths = this.add.particles(l.x * T + 8, l.y * T + 3, 'ember', {
+        speed: { min: 4, max: 10 },
+        lifespan: 1600,
+        frequency: 700,
+        scale: 0.5,
+        tint: 0xf2e8c8,
+        alpha: { start: 0.9, end: 0 },
+        emitZone: { type: 'random', source: new Phaser.Geom.Circle(0, 0, 5) } as never,
+      });
+      moths.setDepth(650);
+      this.emitters.push(moths);
     }
     const furnaces = this.map.positionsOf('furnace');
     for (const f of furnaces) {
@@ -795,8 +825,8 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private async transitionToBattle(data: BattleSceneData): Promise<void> {
-    // La zona decide el fondo de combate y con cuánto humo se empieza.
-    data = { smoke: this.map.data.smoke ?? 0, back: this.map.data.battleback, ...data };
+    // La zona decide el fondo de combate.
+    data = { back: this.map.data.battleback, ...data };
     controls.flush();
     const cam = this.cameras.main;
     for (let i = 0; i < 2; i++) {

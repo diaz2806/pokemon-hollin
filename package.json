@@ -1,6 +1,6 @@
 {
   "name": "pokemon-hollin",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Pokémon Hollín — fangame ambientado en la Inglaterra industrial de 1923",
   "scripts": {
     "dev": "vite",

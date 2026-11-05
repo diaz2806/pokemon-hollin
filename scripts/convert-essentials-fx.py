@@ -48,6 +48,9 @@ def main() -> None:
         if f.lower().startswith(('ball_poke', 'ballburst_')) and f.lower().endswith('.png'):
             half(os.path.join(src, f), os.path.join(battle_dir, slug(f) + '.png'))
             n += 1
+    # Iconos de categoría (físico / especial / estado), 3 filas
+    half(os.path.join(GRAPHICS, 'UI', 'category.png'), os.path.join(OUT, 'ui', 'category.png'))
+    n += 1
     print(f'{n} archivos en {OUT}')
 
 

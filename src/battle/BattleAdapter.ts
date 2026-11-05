@@ -6,7 +6,7 @@
  * actuales), monta el combate y devuelve pasos ya traducidos para la escena.
  */
 import { Battle, toID } from '@pkmn/sim';
-import { ACTION_MOVE_ID, getHollinDex, HOLLIN_FORMAT_ID, setSmoke, smokeLevel } from './hollin-mod';
+import { ACTION_MOVE_ID, getHollinDex, HOLLIN_FORMAT_ID } from './hollin-mod';
 import { StepTranslator, visibleLines, type BattleStep, type FoeLabel } from './log-es';
 import { moveName, toId } from './dex-service';
 import { speciesLabel, type PartyMember } from '../core/party';
@@ -62,8 +62,6 @@ export interface BattleOptions {
   opponentPolicy?: OpponentPolicy;
   /** 'salvaje' para encuentros, 'rival' (por defecto) para entrenadores y bandas. */
   foeLabel?: FoeLabel;
-  /** Densidad de humo inicial de la zona (0-3). Ver `humo` en hollin-mod. */
-  smoke?: number;
 }
 
 export interface CaptureOutcome extends CaptureResult {
@@ -132,9 +130,6 @@ export class BattleAdapter {
     this.battle.setPlayer('p2', { name: 'Rival', team: foeSpecs.map(specToSet) as never });
     this.applyStoredState(order.map((i) => player[i]), this.battle.p1.pokemon);
     this.applyStoredState(opponent, this.battle.p2.pokemon);
-    // El humo está siempre en el campo; la zona decide con cuánto empieza.
-    this.battle.field.addPseudoWeather('humo');
-    if (options.smoke) setSmoke(this.battle, options.smoke, 'zone');
     this.policy = options.opponentPolicy ?? randomPolicy();
     this.translator = new StepTranslator(options.foeLabel ?? 'rival', (en) => moveName(toId(en)));
     this.logCursor = this.battle.log.length;
@@ -157,11 +152,6 @@ export class BattleAdapter {
   /** Índice en el equipo original del Pokémon activo del jugador. */
   get activeIndex(): number {
     return this.order[this.battle.p1.pokemon.indexOf(this.battle.p1.active[0])];
-  }
-
-  /** Densidad de humo actual (0-3). */
-  get smoke(): number {
-    return smokeLevel(this.battle);
   }
 
   get ended(): boolean {
