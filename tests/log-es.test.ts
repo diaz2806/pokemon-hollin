@@ -38,7 +38,7 @@ describe('StepTranslator', () => {
 
   it('traduce movimientos con nombres en español', () => {
     expect(t.translate('|move|p1a: Growlithe|Ember|p2a: Pidove')).toEqual([
-      { kind: 'move', side: 'p1' },
+      { kind: 'move', side: 'p1', move: 'ember' },
       { kind: 'text', text: '¡Growlithe usó Ascuas!' },
     ]);
   });
@@ -68,5 +68,21 @@ describe('StepTranslator', () => {
   it('ignora líneas que no se muestran', () => {
     expect(lineToSpanish('|turn|3')).toBeNull();
     expect(lineToSpanish('|-damage|p2a: Pidove|50/100')).toBeNull();
+  });
+});
+
+describe('Humo en el log', () => {
+  const t = new StepTranslator('salvaje', (en) => en);
+
+  it('traduce los cambios de densidad de humo', () => {
+    expect(t.translate('|-humo|3|up')).toEqual([
+      { kind: 'smoke', level: 3 },
+      { kind: 'text', text: '¡Hollín negro! Ya no se ve nada...' },
+    ]);
+    expect(t.translate('|-humo|0|down')[1]).toEqual({ kind: 'text', text: '¡El viento se lleva el humo!' });
+  });
+
+  it('el nivel inicial de la zona no lleva texto', () => {
+    expect(t.translate('|-humo|2|zone')).toEqual([{ kind: 'smoke', level: 2 }]);
   });
 });

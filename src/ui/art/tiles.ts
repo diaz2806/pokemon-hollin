@@ -58,7 +58,18 @@ const C = {
 
 type Draw = (p: Painter, frame: number) => void;
 
+/**
+ * Modo "objeto": se pinta solo la cosa (farola, caja...) sin su suelo, para ponerla
+ * encima de un suelo de tileset. Los dibujantes de suelo no hacen nada mientras está activo.
+ */
+let bare = false;
+
+function floor(p: Painter) {
+  if (!bare) p.rect(0, 0, T, T, C.floorA);
+}
+
 function cobble(p: Painter, seed: number, base = C.cobble, dark = C.cobbleDark, light = C.cobbleLight) {
+  if (bare) return;
   p.rect(0, 0, T, T, dark);
   const rng = seeded(seed);
   // Adoquines de 5x4 en filas desplazadas.
@@ -124,7 +135,7 @@ const draws: Record<Tile, Draw> = {
     p.rect(0, 14, T, 2, '#151518');
   },
   chimney: (p) => {
-    roof(p);
+    if (!bare) roof(p);
     p.rect(4, 2, 8, 14, C.brickB);
     for (let y = 4; y < 16; y += 3) p.hline(4, y, 8, C.mortar);
     p.rect(3, 0, 10, 3, C.iron);
@@ -232,14 +243,14 @@ const draws: Record<Tile, Draw> = {
     for (let x = 2; x < T; x += 5) p.vline(x, 6, 9, C.frame);
   },
   table: (p) => {
-    p.rect(0, 0, T, T, C.floorA);
+    floor(p);
     p.ellipse(8, 7, 7, 5, C.woodDark);
     p.ellipse(8, 6, 7, 5, C.woodLight);
     p.rect(6, 4, 2, 3, '#c9b25a'); // jarra
     p.rect(7, 12, 2, 4, C.woodDark);
   },
   mat: (p) => {
-    p.rect(0, 0, T, T, C.floorA);
+    floor(p);
     p.rect(1, 2, 14, 12, '#7a2f2f');
     p.rect(2, 3, 12, 10, '#8f3d36');
     p.hline(3, 8, 10, '#7a2f2f');
@@ -262,8 +273,10 @@ const draws: Record<Tile, Draw> = {
     p.rect(2, 3, 12, 2, C.ironLight);
   },
   cage: (p) => {
-    p.rect(0, 0, T, T, C.grateDark);
-    for (let y = 0; y < T; y += 4) for (let x = 0; x < T; x += 4) p.rect(x, y, 3, 3, C.grate);
+    if (!bare) {
+      p.rect(0, 0, T, T, C.grateDark);
+      for (let y = 0; y < T; y += 4) for (let x = 0; x < T; x += 4) p.rect(x, y, 3, 3, C.grate);
+    }
     p.rect(1, 1, 14, 14, '#1d1b19');
     p.rect(2, 2, 12, 12, '#2a2725');
     for (let x = 1; x < 15; x += 3) p.vline(x, 1, 14, '#6b665d');
@@ -318,6 +331,7 @@ const draws: Record<Tile, Draw> = {
 };
 
 function dirt(p: Painter, seed: number) {
+  if (bare) return;
   p.rect(0, 0, T, T, '#4a443a');
   const rng = seeded(seed);
   for (let i = 0; i < 18; i++) p.px(Math.floor(rng() * 16), Math.floor(rng() * 16), rng() < 0.5 ? '#3e392f' : '#57503f');
@@ -359,6 +373,16 @@ export const TILE_FRAMES: Partial<Record<Tile, number>> = { water: 2, furnace: 2
 
 export function drawTile(p: Painter, tile: Tile, frame = 0): void {
   draws[tile](p, frame);
+}
+
+/** Solo el objeto, sin suelo (ver `bare`). */
+export function drawProp(p: Painter, tile: Tile, frame = 0): void {
+  bare = true;
+  try {
+    draws[tile](p, frame);
+  } finally {
+    bare = false;
+  }
 }
 
 export const ALL_TILES = Object.keys(draws) as Tile[];

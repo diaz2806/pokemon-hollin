@@ -1,6 +1,8 @@
 {
  "id": "almacen",
  "name": "Almacén de Los Gorriones",
+ "smoke": 1,
+ "battleback": "indoor1",
  "indoor": true,
  "rows": [
   "##############",

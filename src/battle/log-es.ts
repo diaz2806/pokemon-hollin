@@ -13,10 +13,20 @@ export type BattleStep =
   | { kind: 'hp'; side: Side; hp: number; maxHp: number; status: string }
   | { kind: 'switch'; side: Side; name: string }
   | { kind: 'faint'; side: Side }
-  /** Animación de ataque del lado indicado (antes del texto "usó..."). */
-  | { kind: 'move'; side: Side };
+  /** Animación de ataque del lado indicado (antes del texto "usó..."); `move` es el id. */
+  | { kind: 'move'; side: Side; move: string }
+  /** La densidad de humo del campo cambia (0-3). */
+  | { kind: 'smoke'; level: number };
 
 export type MoveNameFn = (englishName: string) => string;
+
+/** Textos al cambiar la densidad de humo, según la causa. */
+const SMOKE_TEXT: Record<string, (level: number) => string> = {
+  up: (level) => (level >= 3 ? '¡Hollín negro! Ya no se ve nada...' : '¡El humo se espesa!'),
+  down: (level) => (level === 0 ? '¡El viento se lleva el humo!' : 'El viento aclara un poco el humo.'),
+  clear: () => '¡El aire queda limpio de humo!',
+  zone: () => '',
+};
 
 /**
  * De cada bloque "|split|pN" se queda con UNA versión de la línea:
@@ -112,7 +122,17 @@ export class StepTranslator {
     const text = (t: string): BattleStep => ({ kind: 'text', text: t });
     switch (cmd) {
       case 'move':
-        return [{ kind: 'move', side: parseIdent(parts[2]).side }, text(`¡${this.who(parts[2])} usó ${this.moveName(parts[3])}!`)];
+        return [
+          { kind: 'move', side: parseIdent(parts[2]).side, move: parts[3].toLowerCase().replace(/[^a-z0-9]/g, '') },
+          text(`¡${this.who(parts[2])} usó ${this.moveName(parts[3])}!`),
+        ];
+      case '-humo': {
+        const level = Number(parts[2]);
+        const steps: BattleStep[] = [{ kind: 'smoke', level }];
+        const message = SMOKE_TEXT[parts[3]]?.(level) ?? '';
+        if (message) steps.push(text(message));
+        return steps;
+      }
       case '-damage':
       case '-heal':
       case '-sethp': {

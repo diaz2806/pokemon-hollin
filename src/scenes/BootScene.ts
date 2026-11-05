@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 import { generateAllTextures } from '../ui/art/textures';
 import { FONT, FONT_PX } from '../ui/palette';
-import { queueRes, type ResRequest } from '../ui/resources';
+import { queueRes, resNames, type ResRequest } from '../ui/resources';
 import { COMMON_SE } from '../ui/audio';
 import { CHOICE_SKIN, SPEECH_SKIN } from '../ui/TextBox';
 import { MAPS } from '../game/content';
@@ -24,6 +24,8 @@ export class BootScene extends Phaser.Scene {
       { cat: 'ui/windowskins', name: SPEECH_SKIN },
       { cat: 'ui/windowskins', name: CHOICE_SKIN },
       ...COMMON_SE.map((name) => ({ cat: 'audio/se' as const, name })),
+      ...resNames('tiles').map((name) => ({ cat: 'tiles' as const, name })),
+      { cat: 'fogs', name: 'fog_tile' },
       ...[...characters].map((name) => ({ cat: 'characters' as const, name, sheet: [4, 4] as [number, number] })),
     ];
     queueRes(this, requests);

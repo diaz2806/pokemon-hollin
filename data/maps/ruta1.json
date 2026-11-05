@@ -1,6 +1,8 @@
 {
  "id": "ruta1",
  "name": "Camino de la Escoria",
+ "smoke": 2,
+ "battleback": "rocky_night",
  "encounterTable": "ruta1-escoria",
  "rows": [
   "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",

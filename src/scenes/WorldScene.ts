@@ -19,9 +19,10 @@ import { session } from '../game/session';
 import { controls } from '../ui/input';
 import { TextBox, Menu } from '../ui/TextBox';
 import { T, TILE_FRAMES } from '../ui/art/tiles';
-import { characterKey, followerPlaceholderKey, tileKey, FACINGS } from '../ui/art/textures';
+import { characterKey, followerPlaceholderKey, propKey, tileKey, FACINGS } from '../ui/art/textures';
+import { cellLook } from '../core/tile-skin';
 import { textStyle } from '../ui/TextBox';
-import { resKey, resReady } from '../ui/resources';
+import { resKey, resReady, skinKeys } from '../ui/resources';
 import { playBgm, playMe, playSe } from '../ui/audio';
 import { assetKey, ensureAssets, hasAsset, hasTexture } from '../ui/assets';
 import { PALETTE, GAME_W, GAME_H } from '../ui/palette';
@@ -36,10 +37,26 @@ const ROW: Record<Direction, number> = { down: 0, left: 1, right: 2, up: 3 };
 /** Protagonista (HGSS) si están los personajes de Gen 4. */
 export const HERO_OW = 'trchar000';
 
+/**
+ * Tinte de cada suelo de tileset: los de Essentials son claros y alegres; aquí se
+ * ensucian de hollín para que encajen con la paleta gris de Ashbury.
+ */
+const SKIN_TINT: Record<string, number> = {
+  cobble: 0x8f8a84,
+  smoke: 0x7e7a78,
+  quay: 0x8c8780,
+  dirt: 0x8a7f70,
+  wood: 0xc8b8a8,
+  metal: 0xa8a4a8,
+  roof_top: 0xa0a0b0,
+  roof: 0xa0a0b0,
+};
+
+/** Casilla animada: va rotando entre sus texturas (agua, hornos, ventanas...). */
 interface Animated {
   image: Phaser.GameObjects.Image;
-  tile: string;
-  frames: number;
+  keys: string[];
+  index: number;
 }
 
 export class WorldScene extends Phaser.Scene {
@@ -49,6 +66,7 @@ export class WorldScene extends Phaser.Scene {
   private mapLayer!: Phaser.GameObjects.Container;
   private fxLayer!: Phaser.GameObjects.Container;
   private animated: Animated[] = [];
+  private fog?: Phaser.GameObjects.TileSprite;
   private player!: Phaser.GameObjects.Sprite;
   private followerSprite: Phaser.GameObjects.Sprite | null = null;
   private follower = new Follower({ x: 0, y: 0 });
@@ -77,6 +95,7 @@ export class WorldScene extends Phaser.Scene {
     this.fxLayer = this.add.container(0, 0).setDepth(600);
     this.textbox = new TextBox(this);
     this.player = this.add.sprite(0, 0, this.charTexture(HERO_OW, 'hero'), 0).setOrigin(0.5, 1);
+    this.applyColorGrade();
     this.loadMap(this.state.map, this.state.pos, this.state.facing);
     this.cameras.main.fadeIn(400);
     this.events.on(Phaser.Scenes.Events.WAKE, (_s: unknown, data?: BattleResult) => this.onWake(data));
@@ -84,12 +103,16 @@ export class WorldScene extends Phaser.Scene {
 
   update(_time: number, delta: number): void {
     this.state.playTimeMs += delta;
+    if (this.fog?.active) {
+      this.fog.tilePositionX += delta * 0.01;
+      this.fog.tilePositionY += delta * 0.003;
+    }
     this.animClock += delta;
     if (this.animClock >= 500) {
       this.animClock = 0;
       for (const a of this.animated) {
-        const current = Number(a.image.texture.key.split('-').pop());
-        a.image.setTexture(tileKey(a.tile, (current + 1) % a.frames));
+        a.index = (a.index + 1) % a.keys.length;
+        a.image.setTexture(a.keys[a.index]);
       }
     }
     if (this.busy || this.moving) return;
@@ -156,13 +179,7 @@ export class WorldScene extends Phaser.Scene {
     this.npcSprites.clear();
 
     for (let y = 0; y < this.map.height; y++) {
-      for (let x = 0; x < this.map.width; x++) {
-        const tile = this.map.tileAt({ x, y });
-        const image = this.add.image(x * T, y * T, tileKey(tile, 0)).setOrigin(0);
-        this.mapLayer.add(image);
-        const frames = TILE_FRAMES[tile] ?? 1;
-        if (frames > 1) this.animated.push({ image, tile, frames });
-      }
+      for (let x = 0; x < this.map.width; x++) this.drawCell({ x, y });
     }
 
     this.spawnNpcs();
@@ -182,6 +199,33 @@ export class WorldScene extends Phaser.Scene {
       cam.startFollow(this.player, true);
       cam.setFollowOffset(0, -8);
     }
+  }
+
+  /**
+   * Pinta una casilla: suelo de tileset si existe (assets/tiles) y, si toca, el objeto
+   * procedural encima; si no hay casillas de tileset, el arte procedural completo.
+   */
+  private drawCell(p: Point): void {
+    const tile = this.map.tileAt(p);
+    const frames = TILE_FRAMES[tile] ?? 1;
+    const look = cellLook(this.map, p);
+    const groundKeys = look.ground ? skinKeys(this, look.ground) : [];
+    const add = (keys: string[], start = 0, tint?: number) => {
+      const image = this.add.image(p.x * T, p.y * T, keys[start % keys.length]).setOrigin(0);
+      if (tint !== undefined) image.setTint(tint);
+      this.mapLayer.add(image);
+      if (keys.length > 1) this.animated.push({ image, keys, index: start % keys.length });
+    };
+    const propKeys = Array.from({ length: frames }, (_, f) => propKey(tile, f));
+    if (groundKeys.length === 0) {
+      add(Array.from({ length: frames }, (_, f) => tileKey(tile, f)));
+      return;
+    }
+    // El agua anima sus fotogramas; el resto elige una variante fija según la posición.
+    const tint = SKIN_TINT[look.ground!];
+    if (look.ground === 'water') add(groundKeys, look.variant, 0xb0b8c0);
+    else add([groundKeys[look.variant % groundKeys.length]], 0, tint);
+    if (look.prop) add(propKeys);
   }
 
   private spawnNpcs(): void {
@@ -259,14 +303,39 @@ export class WorldScene extends Phaser.Scene {
     sprite.setFrame(official ? row * 4 + (frame % 4) : row * 2 + (frame % 2));
   }
 
+  /**
+   * Gradación de color de Ashbury: quita saturación (los tilesets de Essentials son muy
+   * alegres para 1923) y oscurece los bordes. Son filtros de cámara de Phaser 4 (WebGL);
+   * en Canvas no existen y el juego se ve sin ellos.
+   */
+  private applyColorGrade(): void {
+    if (this.game.renderer.type !== Phaser.WEBGL) return;
+    const cam = this.cameras.main;
+    cam.filters.internal.addColorMatrix().colorMatrix.saturate(-0.38);
+    cam.filters.internal.addVignette(0.5, 0.5, 0.82, 0.45);
+  }
+
   /** Humo, chispas y luz de gas. */
   private setupAtmosphere(): void {
     const outdoor = !this.map.data.indoor;
     const w = this.map.width * T;
     const h = this.map.height * T;
     if (outdoor) {
-      const veil = this.add.rectangle(0, 0, w, h, 0x0e0e14, 0.28).setOrigin(0);
+      const veil = this.add.rectangle(0, 0, w, h, 0x0e0e14, 0.22).setOrigin(0);
       this.fxLayer.add(veil);
+    }
+    // Niebla de humo que se arrastra por las calles: más densa cuanto más humo tiene la zona.
+    const density = this.map.data.smoke ?? 0;
+    if (density > 0 && resReady(this, 'fogs', 'fog_tile')) {
+      const fog = this.add
+        .tileSprite(0, 0, w, h, resKey('fogs', 'fog_tile'))
+        .setOrigin(0)
+        .setTint(0x5a5650)
+        .setAlpha(0.08 + density * 0.07);
+      this.fxLayer.add(fog);
+      this.fog = fog;
+    } else {
+      this.fog = undefined;
     }
     const lights = [...this.map.positionsOf('lamp'), ...this.map.positionsOf('window'), ...this.map.positionsOf('pubDoor')];
     for (const l of lights) {
@@ -726,6 +795,8 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private async transitionToBattle(data: BattleSceneData): Promise<void> {
+    // La zona decide el fondo de combate y con cuánto humo se empieza.
+    data = { smoke: this.map.data.smoke ?? 0, back: this.map.data.battleback, ...data };
     controls.flush();
     const cam = this.cameras.main;
     for (let i = 0; i < 2; i++) {

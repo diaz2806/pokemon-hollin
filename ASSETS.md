@@ -56,6 +56,19 @@ assets/
 - Si falta algo, el juego usa lo propio: ventanas dibujadas, menús de texto, personajes generados y silencio.
 - Los NPC eligen personaje con `ow` en el JSON del mapa; los entrenadores, su sprite de combate con `battler`.
 
+## Texturas de mapa y efectos de combate
+
+```bash
+python3 scripts/build-tile-skins.py <Graphics de Essentials> <tileset interior Gen 4 de Akizakura> assets/tiles
+python3 scripts/convert-essentials-fx.py <Graphics de Essentials> assets
+```
+
+- `assets/tiles/<clave>_<n>.png`: suelos, tejados y paredes de los tilesets (16 px). Qué casilla va
+  en cada clave está en `SKINS` dentro del script; qué clave usa cada casilla del mapa, en `src/core/tile-skin.ts`.
+- `assets/animations/`: hojas de animaciones de ataques (celdas de 96 px). La tabla tipo → hoja está en `src/ui/battle-fx.ts`.
+- `assets/fogs/`: niebla para la densidad de humo y las calles.
+- `assets/ui/battle/ball_pokeball*.png`, `ballburst_particle.png`: la salida con Poké Ball.
+
 ## El .exe con sprites
 
 El `.exe` de las Releases públicas **no** lleva sprites oficiales. La versión con sprites se compila

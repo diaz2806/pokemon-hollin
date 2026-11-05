@@ -90,3 +90,14 @@ describe('Progresión', () => {
     expect(evolve(member, 'Tranquill').species).toBe('Tranquill');
   });
 });
+
+describe('Eficacia de tipos', () => {
+  it('calcula el multiplicador para la pista del menú', async () => {
+    const { typeMultiplier } = await import('../src/battle/dex-service');
+    expect(typeMultiplier('Fire', ['Grass'])).toBe(2);
+    expect(typeMultiplier('Fire', ['Grass', 'Bug'])).toBe(4);
+    expect(typeMultiplier('Water', ['Grass'])).toBe(0.5);
+    expect(typeMultiplier('Normal', ['Ghost'])).toBe(0);
+    expect(typeMultiplier('Dark', ['Poison', 'Dark'])).toBe(0.5);
+  });
+});

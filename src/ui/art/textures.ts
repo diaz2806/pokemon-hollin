@@ -3,7 +3,7 @@
  * placeholders de Pokémon, efectos y fondos de combate.
  */
 import * as Phaser from 'phaser';
-import { ALL_TILES, drawTile, T, TILE_FRAMES } from './tiles';
+import { ALL_TILES, drawProp, drawTile, T, TILE_FRAMES } from './tiles';
 import { CHARACTER_FRAMES, CHARACTER_PALETTES, WALK_FRAMES, type Facing } from './characters';
 import { Painter, mix, seeded } from './painter';
 
@@ -42,6 +42,11 @@ function canvasTexture(scene: Phaser.Scene, key: string, w: number, h: number, d
 
 export function tileKey(tile: string, frame = 0): string {
   return `tile-${tile}-${frame}`;
+}
+
+/** El mismo dibujo sin suelo, para ponerlo encima de una casilla de tileset. */
+export function propKey(tile: string, frame = 0): string {
+  return `prop-${tile}-${frame}`;
 }
 
 /** Spritesheet de personaje: columnas = fotogramas (stand, stepA, stepB), filas = FACINGS. */
@@ -204,7 +209,10 @@ function generateBattleBackground(scene: Phaser.Scene): void {
 function generateTiles(scene: Phaser.Scene): void {
   for (const tile of ALL_TILES) {
     const frames = TILE_FRAMES[tile] ?? 1;
-    for (let f = 0; f < frames; f++) canvasTexture(scene, tileKey(tile, f), T, T, (p) => drawTile(p, tile, f));
+    for (let f = 0; f < frames; f++) {
+      canvasTexture(scene, tileKey(tile, f), T, T, (p) => drawTile(p, tile, f));
+      canvasTexture(scene, propKey(tile, f), T, T, (p) => drawProp(p, tile, f));
+    }
   }
 }
 

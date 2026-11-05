@@ -10,6 +10,8 @@
  *   assets/battlebacks/<nombre>.png     fondos y plataformas de combate
  *   assets/trainers/<nombre>.png        entrenadores en combate
  *   assets/items/<nombre>.png           iconos de objetos
+ *   assets/tiles/<clave>_<n>.png        casillas de tileset para los mapas (ver core/tile-skin)
+ *   assets/animations/<nombre>.png      hojas de animaciones de ataques (192 px por celda)
  *   assets/audio/{bgm,me,se,cries}/<nombre>.ogg
  */
 import * as Phaser from 'phaser';
@@ -35,6 +37,9 @@ export type ResCategory =
   | 'battlebacks'
   | 'trainers'
   | 'items'
+  | 'tiles'
+  | 'animations'
+  | 'fogs'
   | 'audio/bgm'
   | 'audio/me'
   | 'audio/se'
@@ -53,6 +58,8 @@ export interface ResRequest {
   name: string;
   /** Si es una hoja de fotogramas: [columnas, filas]. */
   sheet?: [number, number];
+  /** O bien hoja de fotogramas de tamaño fijo: [ancho, alto] en píxeles. */
+  frame?: [number, number];
 }
 
 /** ¿Está el recurso disponible y ya cargado? */
@@ -72,6 +79,8 @@ export function queueRes(scene: Phaser.Scene, requests: ResRequest[]): number {
     const key = resKey(r.cat, r.name);
     if (r.cat.startsWith('audio/')) {
       scene.load.audio(key, url);
+    } else if (r.frame) {
+      scene.load.spritesheet(key, url, { frameWidth: r.frame[0], frameHeight: r.frame[1] });
     } else if (r.sheet) {
       const raw = `${key}#raw`;
       if (scene.textures.exists(raw)) continue;
@@ -99,6 +108,24 @@ export function ensureRes(scene: Phaser.Scene, requests: ResRequest[]): Promise<
   });
 }
 
+/** Nombres disponibles en una categoría (p. ej. todas las casillas de tileset). */
+export function resNames(cat: ResCategory): string[] {
+  const prefix = `${cat}/`;
+  const out: string[] = [];
+  for (const id of index.keys()) if (id.startsWith(prefix) && !id.slice(prefix.length).includes('/')) out.push(id.slice(prefix.length));
+  return out;
+}
+
 export function resCount(): number {
   return index.size;
+}
+
+/**
+ * Texturas cargadas de una casilla de tileset: <clave>_0, <clave>_1... (assets/tiles).
+ * Vacío si no hay ninguna: la escena usa entonces el arte procedural.
+ */
+export function skinKeys(scene: Phaser.Scene, key: string): string[] {
+  const out: string[] = [];
+  for (let i = 0; resReady(scene, 'tiles', `${key}_${i}`); i++) out.push(resKey('tiles', `${key}_${i}`));
+  return out;
 }

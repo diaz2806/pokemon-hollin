@@ -42,6 +42,16 @@ export function speciesTypes(species: string): string[] {
   return dex().species.get(species).types;
 }
 
+/**
+ * Multiplicador de tipo de un ataque contra unos tipos (0, 0.25, 0.5, 1, 2, 4).
+ * Lo usa el menú de ataques para dar la pista de eficacia.
+ */
+export function typeMultiplier(moveType: string, defenderTypes: string[]): number {
+  const d = dex();
+  if (!d.getImmunity(moveType, defenderTypes)) return 0;
+  return 2 ** d.getEffectiveness(moveType, defenderTypes);
+}
+
 export function meta(species: string): SpeciesMeta {
   const s = dex().species.get(species);
   return META[toId(s.baseSpecies)] ?? META[s.id] ?? { num: s.num, catchRate: 45, baseExp: 60, growth: 'medium' };
@@ -58,9 +68,9 @@ export function moveName(id: string): string {
   return MOVE_NAMES_ES[toId(id)] ?? dex().moves.get(id).name;
 }
 
-export function moveInfo(id: string): { name: string; type: string; pp: number; category: string; power: number } {
+export function moveInfo(id: string): { name: string; type: string; pp: number; category: string; power: number; target: string } {
   const m = dex().moves.get(id);
-  return { name: moveName(m.id), type: m.type, pp: m.pp, category: m.category, power: m.basePower };
+  return { name: moveName(m.id), type: m.type, pp: m.pp, category: m.category, power: m.basePower, target: m.target };
 }
 
 /**

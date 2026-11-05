@@ -6,7 +6,7 @@
 import * as Phaser from 'phaser';
 import { controls } from './input';
 import { playSe } from './audio';
-import { resKey, resReady, type ResRequest } from './resources';
+import { hasRes, resKey, resReady, type ResRequest } from './resources';
 import { FONT_PX } from './palette';
 
 /** Filas de cursor_fight.png y types.png (orden de Essentials). */
@@ -15,10 +15,62 @@ export const TYPE_ROW: Record<string, number> = {
   Fire: 10, Water: 11, Grass: 12, Electric: 13, Psychic: 14, Ice: 15, Dragon: 16, Dark: 17, Fairy: 18,
 };
 
+/** Colores clásicos de cada tipo (para las etiquetas en español). */
+export const TYPE_COLOR: Record<string, string> = {
+  Normal: '#a8a878', Fire: '#f08030', Water: '#6890f0', Grass: '#78c850', Electric: '#e8c020', Ice: '#78c8c8',
+  Fighting: '#c03028', Poison: '#a040a0', Ground: '#c8a048', Flying: '#a890f0', Psychic: '#f85888', Bug: '#a8b820',
+  Rock: '#b8a038', Ghost: '#705898', Dragon: '#7038f8', Dark: '#705848', Steel: '#a8a8c0', Fairy: '#e890a8', '???': '#68a090',
+};
+
+/** Nombres de tipo en español, cortos para caber en la etiqueta. */
+export const TYPE_SHORT_ES: Record<string, string> = {
+  Normal: 'NORMAL', Fire: 'FUEGO', Water: 'AGUA', Grass: 'PLANTA', Electric: 'ELÉCTR', Ice: 'HIELO', Fighting: 'LUCHA',
+  Poison: 'VENENO', Ground: 'TIERRA', Flying: 'VOLAD', Psychic: 'PSÍQ', Bug: 'BICHO', Rock: 'ROCA', Ghost: 'FANTAS',
+  Dragon: 'DRAGÓN', Dark: 'SINIEST', Steel: 'ACERO', Fairy: 'HADA', '???': '???',
+};
+
+/** Estados en español (abreviados) y su color, como etiqueta en la caja de datos. */
+export const STATUS_LABEL: Record<string, [string, string]> = {
+  slp: ['DOR', '#8c8c8c'], psn: ['ENV', '#a040a0'], tox: ['ENV', '#702070'], brn: ['QUE', '#e07030'],
+  par: ['PAR', '#c8a000'], frz: ['CON', '#58a8c8'],
+};
+
+/** Etiqueta de color con texto blanco (tipo o estado), hecha con un Text con fondo. */
+export function labelStyle(bg: string): Phaser.Types.GameObjects.Text.TextStyle {
+  return {
+    fontFamily: '"Press Start 2P"',
+    fontSize: `${FONT_PX}px`,
+    color: '#ffffff',
+    backgroundColor: bg,
+    padding: { x: 2, y: 1 },
+    shadow: { offsetX: 1, offsetY: 1, color: '#00000088', fill: true },
+    resolution: 1,
+  };
+}
+
 /** Fila de icon_statuses.png para cada estado de Showdown. */
 export const STATUS_ROW: Record<string, number> = { slp: 0, psn: 1, brn: 2, par: 3, frz: 4, tox: 5 };
 
 export const BATTLE_BACK = 'city_night';
+
+/** Piezas de un fondo de combate de Essentials (algunos comparten bases y mensaje). */
+export interface BattlebackParts {
+  bg: string;
+  base0: string;
+  base1: string;
+  message: string;
+}
+
+/**
+ * "rocky_night" usa rocky_night_bg y rocky_night_base*, pero el mensaje de rocky;
+ * "city_night" usa city_night_bg con las bases y el mensaje de city. Se resuelve
+ * buscando primero el nombre completo y luego sin el momento del día.
+ */
+export function battlebackParts(name: string): BattlebackParts {
+  const plain = name.replace(/_(night|eve)$/, '');
+  const pick = (suffix: string) => (hasRes('battlebacks', `${name}_${suffix}`) ? `${name}_${suffix}` : `${plain}_${suffix}`);
+  return { bg: pick('bg'), base0: pick('base0'), base1: pick('base1'), message: pick('message') };
+}
 
 /** Recursos que BattleScene necesita para la interfaz de Essentials. */
 export const BATTLE_UI_RESOURCES: ResRequest[] = [
@@ -30,14 +82,27 @@ export const BATTLE_UI_RESOURCES: ResRequest[] = [
   { cat: 'ui/battle', name: 'overlay_fight' },
   { cat: 'ui/battle', name: 'icon_statuses', sheet: [1, 6] },
   { cat: 'ui', name: 'types', sheet: [1, 19] },
-  { cat: 'battlebacks', name: `${BATTLE_BACK}_bg` },
-  { cat: 'battlebacks', name: 'city_base0' },
-  { cat: 'battlebacks', name: 'city_base1' },
-  { cat: 'battlebacks', name: 'city_message' },
 ];
 
-export function essentialsBattleUi(scene: Phaser.Scene): boolean {
-  return BATTLE_UI_RESOURCES.every((r) => resReady(scene, r.cat, r.name));
+export function battleResources(back: string): ResRequest[] {
+  const parts = battlebackParts(back);
+  return [
+    ...BATTLE_UI_RESOURCES,
+    ...Object.values(parts).map((name) => ({ cat: 'battlebacks' as const, name })),
+    { cat: 'ui/battle', name: 'ball_pokeball', frame: [16, 32] },
+    { cat: 'ui/battle', name: 'ball_pokeball_open' },
+    { cat: 'ui/battle', name: 'ballburst_particle' },
+    { cat: 'fogs', name: 'fog_tile' },
+    { cat: 'fogs', name: 'fog_tile_2' },
+  ];
+}
+
+export function essentialsBattleUi(scene: Phaser.Scene, back: string): boolean {
+  const parts = battlebackParts(back);
+  return (
+    BATTLE_UI_RESOURCES.every((r) => resReady(scene, r.cat, r.name)) &&
+    Object.values(parts).every((name) => resReady(scene, 'battlebacks', name))
+  );
 }
 
 export interface ButtonItem {
